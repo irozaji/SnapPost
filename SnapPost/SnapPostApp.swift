@@ -2,7 +2,7 @@
 //  SnapPostApp.swift
 //  SnapPost
 //
-//  Created by ilzat abdusamat on 8/27/25.
+//  Created by Ilzat Rozaji on 8/27/25.
 //
 
 import SwiftUI
