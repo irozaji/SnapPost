@@ -230,37 +230,6 @@ Building a native iOS app for **personal productivity** that captures images of 
 
 ---
 
-### 7. Mock Mode Development ✅ COMPLETED
-
-**Purpose**: Enable cost-effective development without OpenAI API calls
-
-**Core Features**
-
-- [ ] **Environment Detection**
-  - [ ] DEBUG vs RELEASE build configuration
-  - [ ] Automatic mock mode in DEBUG builds
-  - [ ] Manual override capability for testing
-- [ ] **Mock Response System**
-  - [ ] Realistic LinkedIn post templates
-  - [ ] Dynamic content based on input excerpt
-  - [ ] Configurable response delay simulation
-  - [ ] Error scenario simulation
-- [ ] **Development Tools**
-  - [ ] Mock mode status indicator in UI
-  - [ ] Easy switching between mock/real modes
-  - [ ] Mock data customization for testing
-  - [ ] Performance metrics in mock mode
-
-**Benefits**
-
-- [x] **💰 Cost**: $0 during development
-- [x] **⚡ Speed**: Instant responses for UI testing
-- [x] **🔄 Reliability**: No network issues or API limits
-- [x] **🧪 Testing**: Consistent responses for UI validation
-- [x] **🚀 Development**: Focus on app features, not API costs
-
----
-
 ## 🛠 Technical Infrastructure
 
 ### Project Structure ✅ COMPLETED
@@ -304,27 +273,3 @@ Building a native iOS app for **personal productivity** that captures images of 
 - [ ] Performance benchmarks (meet success criteria)
 
 ---
-
-## 📚 PRD Compliance
-
-- [x] Image-capture based (not live DataScannerViewController) ✅
-- [x] Rectangle detection → perspective correction → enhancement → OCR ✅
-- [x] Image scaling to maxImageWidthForProcessing ✅
-- [x] Configurable tuning parameters ✅
-- [x] Application Support storage location (planned)
-- [x] No LinkedIn REST API usage (share sheet only) ✅
-- [x] ~~Keychain for API keys~~ ❌ UPDATED - Direct API key configuration for v1 personal use
-- [x] Unit tests for core utilities ✅
-
----
-
-## ✅ v1 Simplification Status
-
-**Current State**: AI Generation feature simplified for v1 personal use ✅ COMPLETED
-**Action Completed**: Removed user-facing complexity, simplified for personal productivity
-**Next**: Configure your OpenAI API key in `AIConfig.swift` and test the full flow
-
----
-
-_Last Updated: August 30, 2025_
-_Status: Scanner, Composer, and AI Generation completed. Ready for API key configuration and testing._
