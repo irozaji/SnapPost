@@ -29,20 +29,23 @@
 		125F56242E5FF095006E11F1 /* SnapPostUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SnapPostUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		12AAB72B2E60B62100924D93 /* Exceptions for "SnapPost" folder in "SnapPost" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 125F560C2E5FF093006E11F1 /* SnapPost */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		125F560F2E5FF093006E11F1 /* SnapPost */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				12AAB72B2E60B62100924D93 /* Exceptions for "SnapPost" folder in "SnapPost" target */,
+			);
 			path = SnapPost;
-			sourceTree = "<group>";
-		};
-		125F561D2E5FF095006E11F1 /* SnapPostTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SnapPostTests;
-			sourceTree = "<group>";
-		};
-		125F56272E5FF095006E11F1 /* SnapPostUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SnapPostUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -76,8 +79,6 @@
 			isa = PBXGroup;
 			children = (
 				125F560F2E5FF093006E11F1 /* SnapPost */,
-				125F561D2E5FF095006E11F1 /* SnapPostTests */,
-				125F56272E5FF095006E11F1 /* SnapPostUITests */,
 				125F560E2E5FF093006E11F1 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -130,9 +131,6 @@
 			dependencies = (
 				125F561C2E5FF095006E11F1 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				125F561D2E5FF095006E11F1 /* SnapPostTests */,
-			);
 			name = SnapPostTests;
 			packageProductDependencies = (
 			);
@@ -152,9 +150,6 @@
 			);
 			dependencies = (
 				125F56262E5FF095006E11F1 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				125F56272E5FF095006E11F1 /* SnapPostUITests */,
 			);
 			name = SnapPostUITests;
 			packageProductDependencies = (
@@ -395,8 +390,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 48JQSJYTHP;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SnapPost/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Snap Post";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -427,8 +424,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 48JQSJYTHP;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SnapPost/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Snap Post";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

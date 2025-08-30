@@ -2,10 +2,21 @@
 
 ## Project overview
 
-Build a native iOS app that lets a user capture an image of book pages or a paragraph, run on-device image preprocessing and OCR to extract clean text, generate 3 LinkedIn-ready post drafts with AI, then share instantly using the iOS share sheet into the LinkedIn app.
-**No backend in v1.**
-**No LinkedIn API usage.**
-All user data remains on device.
+Build a native iOS app for personal productivity that lets you capture an image of book pages or paragraphs, run on-device image preprocessing and OCR to extract clean text, generate 5 LinkedIn-ready post drafts with AI, then share instantly using the iOS share sheet into the LinkedIn app.
+
+**v1 Scope:**
+
+- **Personal productivity app** - designed for individual use
+- **Direct OpenAI API integration** - no backend required
+- **No user accounts or subscriptions** - single-user app
+- **No LinkedIn API usage** - share sheet only
+- All user data remains on device
+
+**v2+ Future Plans:**
+
+- User accounts and subscription management
+- Backend infrastructure for multi-user support
+- Usage analytics and billing
 
 **Success criteria**
 
@@ -302,7 +313,11 @@ enum AIConfig {
 
 **Storage of API key**
 
-- Key saved in Keychain under service `ai.key` account `openai` if user enters key. Do not hardcode.
+- For v1 (personal productivity use), API key is configured in the app's configuration
+- No user-facing API key management in v1
+- Direct OpenAI API calls from the app
+- Subscription and user management planned for v2
+- API key can be stored in app configuration or environment variables for development
 
 ---
 
@@ -551,7 +566,7 @@ Add or verify these keys in `Info.plist`:
 - **Do** expose tuning parameters in `ImageProcessor.Config` so testers can adjust `yTolerancePixels` and `maxImageWidthForProcessing` without code changes.
 - **Do** store history in `Application Support/SparkPost/history.json` as a JSON array with max length 20.
 - **Do not** call any LinkedIn REST API in v1. Use share sheet only.
-- **Do** store AI keys in Keychain if you require the user to input them. Do not hardcode keys in the repo.
+- **Do** configure OpenAI API key in app configuration for v1 personal use (no user management)
 - **Do** include unit tests for `TextCleaner.clean(...)` and `orderAndExtractLines(...)` using synthetic bounding boxes and example OCR text.
 - **Do** show friendly retry UI for AI timeouts and for Vision errors. Surface meaningful messages like "Try again with a clearer photo" or "Check network and retry".
 
