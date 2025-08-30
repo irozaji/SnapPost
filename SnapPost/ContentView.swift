@@ -124,7 +124,6 @@ struct ContentView: View {
         }
       }
       .padding()
-      .navigationTitle("SnapPost")
       .navigationBarTitleDisplayMode(.inline)
     }
     .sheet(isPresented: $showingScanner) {
