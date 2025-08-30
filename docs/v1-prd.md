@@ -94,7 +94,6 @@ Build a native iOS app for personal productivity that lets you capture an image 
 4. **Share to LinkedIn via share sheet**
 5. **History**
 6. **Quick entry (App Intent + widget)**
-7. **Local reminder for “Later”** _(optional v1.1)_
 
 ---
 
@@ -391,16 +390,6 @@ struct HistoryItem: Identifiable, Codable {
 **Siri**
 
 - Intent registered with phrase: "Scan to Draft"
-
----
-
-### 8. Later reminder (optional v1.1)
-
-**Implementation**
-
-- Use `UNUserNotificationCenter` to schedule a local notification containing `variant.id`.
-- On tap, open deep link `myapp://draft/<variant.id>` and show the Composer with that variant preselected.
-- Request `UNAuthorizationOptions.alert` on first use.
 
 ---
 

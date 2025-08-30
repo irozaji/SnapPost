@@ -63,7 +63,13 @@ struct ComposerView: View {
       viewModel.excerpt = excerptCapture.text
     }
     .sheet(isPresented: $showingShareSheet) {
-      ShareSheet(text: selectedVariantText)
+      ShareSheet(
+        text: selectedVariantText,
+        onComplete: { completed, activityType in
+          if completed {
+            logShare(selectedVariantText)
+          }
+        })
     }
   }
 
@@ -325,16 +331,34 @@ struct VariantCard: View {
 
 struct ShareSheet: UIViewControllerRepresentable {
   let text: String
+  var onComplete: ((Bool, UIActivity.ActivityType?) -> Void)? = nil
 
   func makeUIViewController(context: Context) -> UIActivityViewController {
     let activityController = UIActivityViewController(
       activityItems: [text],
       applicationActivities: nil
     )
+    activityController.completionWithItemsHandler = { activityType, completed, _, _ in
+      onComplete?(completed, activityType)
+    }
     return activityController
   }
 
   func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
+extension ComposerView {
+  fileprivate func logShare(_ text: String) {
+    let formatter = ISO8601DateFormatter()
+    let entry: [String: Any] = [
+      "text": text,
+      "date": formatter.string(from: Date()),
+    ]
+    let defaults = UserDefaults.standard
+    var history = defaults.array(forKey: "shareHistory") as? [[String: Any]] ?? []
+    history.insert(entry, at: 0)
+    defaults.set(history, forKey: "shareHistory")
+  }
 }
 
 #Preview {
