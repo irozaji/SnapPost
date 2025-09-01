@@ -1,96 +1,59 @@
 ## SnapPost v1 — UX/UI Wireframes
 
-### App map (v1)
+### App map (v1, updated)
 
 ```mermaid
 flowchart TD
   Launch[App Launch] --> Home[Home]
-  Home -- Scan Text --> Scanner[ImageCaptureView]
-  Scanner -- Use Image (process) --> Home
-  Home -- Compose Posts --> Composer[ComposerView]
-  Composer -- Share --> ShareSheet[UIActivityViewController]
-  ShareSheet -- Completed --> Home
+  Home -- Scan Text (Camera) --> Results[Results]
+  Home -- Choose from Library --> Results
+  Results -- Generate Posts --> VariantsSheet[Generated Posts (Sheet)]
+  VariantsSheet -- Dismiss --> Results
+  Results -- Back --> Home
   Home -- History (planned) --> History[HistoryView]
 ```
 
 Notes:
 
-- Implemented: `Home`, `ImageCaptureView`, `ComposerView`, `ShareSheet`.
+- Implemented: `Home`, `ImageCaptureView`, `ShareSheet`.
+- Removed: `ComposerView` (functionality integrated inline in `Results`).
 - Planned: `HistoryView`, Quick Entry (App Intent + Lock Screen widget).
 
 ---
 
-### 1) Home (ContentView)
+### 1) Home (ContentView, updated)
 
-States: with/without captured text.
+States: initial (no text).
 
 ```text
-NAV: SnapPost (inline)
+NAV: (inline)   [ ]
 
-[ Header ]
-  [ doc.text.viewfinder icon ]
-  SnapPost
-  Transform text into LinkedIn posts
+Content
+  Optional short helper text
 
-[ Extracted Text Card ]  (shown when excerpt exists)
-  Extracted Text
-  ┌──────────────────────────────────────────────┐
-  │  {excerpt.text} (scroll up to ~200pt)       │
-  └──────────────────────────────────────────────┘
-  [Copy Text]   [Compose Posts]                Captured {timeAgo}
-
-[ Empty State Card ]  (shown when no excerpt)
-  [ doc.text icon ]
-  No text captured yet
-  Tap the scan button to capture text from an image
-
-[ Primary CTA ]
-  [ camera.viewfinder  Scan Text ]
-
-[ Secondary CTA ] (visible when excerpt exists)
-  Scan New Text
+Bottom Action Bar (pinned to safe area)
+  [ camera.viewfinder  Scan Text ]   (Primary, filled, full-width)
+  [ photo.on.rectangle  Choose from Library ]  (Secondary, outline, full-width)
 ```
 
 Key interactions:
 
-- Scan Text → presents `ImageCaptureView` (sheet).
-- Compose Posts (when excerpt exists) → presents `ComposerView` (sheet).
-- Copy Text → copies excerpt to clipboard.
+- Scan Text → opens Camera directly (system camera); on confirm returns to Results.
+- Choose from Library → opens PHPicker; on choose returns to Results.
 
 ---
 
-### 2) Scanner (ImageCaptureView)
+### 2) Scanner Entry (updated)
 
-Sub-states: Empty, Preview, Processing, Error.
+Preferred: direct to Camera on “Scan Text”.
+
+Alternative bottom sheet (if source selection needed):
 
 ```text
-NAV: (inline)   [Cancel]
-
-Header
-  Scan Text
-  Capture text from books or documents
-
-Empty
-  [ doc.text.viewfinder icon (80pt) ]
-  No image selected
-  Choose an option below to get started
-
-Preview (after selecting image)
-  [ Selected Image (max height ~300, fit, corner 12, shadow) ]
-  {if isProcessing}
-    [ ProgressView ]
-    Processing image...
-  {else}
-    [ doc.text.viewfinder  Use Image ]
-
-Actions (always visible)
-  [ camera.fill  Take Photo ]
-  [ photo.fill   Choose from Library ]
-
-Error (alert)
-  Title: Error
-  Message: {errorMessage}
-  Actions: [Retry] [Cancel]
+Bottom Sheet (medium)
+  [ camera.fill  Take Photo ]   (Primary)
+  [ photo.fill   Choose from Library ]   (Secondary)
+  [ Cancel ]  (tertiary link)
 ```
 
 Flow:
@@ -101,53 +64,29 @@ Flow:
 
 ---
 
-### 3) Composer (ComposerView)
+### 3) Results (updated)
 
-Sub-states: Initial, Generating, Variants, Error. Shows mock mode banner in DEBUG/mock.
+Sub-states: Editing, Generating, Error.
 
 ```text
-NAV: Compose Post (inline)   [Cancel]
+NAV: Results (inline)   [Back]
 
-{if mock mode}
-  [ Development Mode ]  Using mock data - no API calls
+Content
+  Editable extracted text (full-height TextEditor)
 
-Excerpt Card
-  Extracted Text
-  ┌──────────────────────────────────────────────┐
-  │ {excerptCapture.text} (scroll up to ~150pt)  │
-  └──────────────────────────────────────────────┘
-  {N} characters
-
-Book Details (Optional)
-  [ Book Title  ....................... ]
-  [ Author      ....................... ]
-
-[ sparkles  Generate LinkedIn Posts ]  (disabled while loading)
-
-Generating
-  [ ProgressView ]
-  Generating LinkedIn posts...
-  This may take a few seconds
-
-Variants (5 cards)
-  For each variant:
-  ┌──────────────────────────────────────────────────────────┐
-  │ [tone badge]                         {len}/900           │
-  │ {variant.text}                                           │
-  │ [ doc.on.doc Copy ]   [ square.and.arrow.up Share ]      │
-  └──────────────────────────────────────────────────────────┘
+Bottom Action Bar (pinned)
+  [ sparkles  Generate Posts ]   (Primary, filled, full-width)
+  [ doc.on.doc  Copy ]           (Secondary, outline, full-width)
+  (link) Scan New
 
 Error
-  [ ⚠ ]  Generation Failed
-  {error message}
-  [ Try Again ]
+  Banner or inline alert with Retry
 ```
 
 Flow:
 
 - Generate → `AIClient.generateVariants(...)` (mock or real)
-- Share → `UIActivityViewController` share sheet
-- Copy → copies variant text
+- Copy → copies edited text
 
 Notes:
 
@@ -156,12 +95,15 @@ Notes:
 
 ---
 
-### 4) Share Sheet (system)
+### 4) Generated Posts (Sheet, updated)
 
 ```text
-UIActivityViewController
-  Activity list (LinkedIn target if installed, Copy, etc.)
-  Completion handler → on success, log to history (temporary storage)
+Bottom sheet (medium → large)
+  [title] Generated Posts   [Done]
+  Scrollable variants (5 cards):
+    [tone badge]   {len}/900
+    {text}
+    [ Copy ]  [ Share ]
 ```
 
 ---

@@ -65,12 +65,13 @@ Build a native iOS app for personal productivity that lets you capture an image 
    - Steps inside `process`: detect page rectangle, perspective-correct the image, optional enhancement (contrast), run `VNRecognizeTextRequest`, order lines, clean text.
    - Process returns `ExcerptCapture` with cleaned `text`.
 
-4. **Compose / Generate**
+4. **Generate Posts**
 
-   - Composer shows excerpt at the top.
-   - User taps Generate.
+   - Results screen shows extracted text in an editable TextEditor.
+   - User can edit the text before generating posts.
+   - User taps "Generate Posts" button.
    - AI returns 5 post variants.
-   - Variant cards shown with Copy and Share actions.
+   - Variant cards shown with Copy and Share actions in a sheet.
 
 5. **Post**
 
@@ -89,7 +90,7 @@ Build a native iOS app for personal productivity that lets you capture an image 
 ## Features
 
 1. **Image Capture + ImageProcessor (OCR)**
-2. **Composer**
+2. **Inline Post Generation** (Integrated into main results screen)
 3. **AI generation**
 4. **Share to LinkedIn via share sheet**
 5. **History**
@@ -201,44 +202,29 @@ private func orderAndExtractLines(from lines: [OCRLine], yTolerance: CGFloat) ->
 
 ---
 
-### 3. Composer
+### 3. Inline Post Generation
 
-**View model and contracts**
+**Implementation**
 
-File: `Features/Composer/ComposeVM.swift`
+- Post generation is now integrated directly into the main results screen (`ContentView.swift`)
+- No separate Composer view or view model needed
+- Text editing happens inline with the extracted text
+- Generation triggered directly from "Generate Posts" button
 
-```swift
-@MainActor
-final class ComposeVM: ObservableObject {
-    @Published var excerpt: String = ""
-    @Published var toneHints: [Tone] = [.punchy, .contrarian, .personal, .analytical, .openQuestion]
-    @Published var selectedTone: Tone? = nil
-    @Published var variants: [Variant] = []
-    @Published var isLoading: Bool = false
-    @Published var error: String? = nil
+**UI Components**
 
-    func generate(bookTitle: String? = nil, author: String? = nil) async
-}
-```
+- `TextEditor` for editable extracted text (full-height container)
+- Two primary action buttons: "Copy" and "Generate Posts"
+- Progress indicator during generation
+- Variants displayed in a sheet with individual Copy/Share actions
+- Error handling with retry functionality
 
-`generate(...)` must call `AIClient.shared.generateVariants(from: excerpt, bookTitle: bookTitle, author: author)`.
+**Data Flow**
 
-`Variant` struct:
-
-```swift
-struct Variant: Identifiable, Codable {
-    let id: UUID
-    let tone: Tone
-    let text: String
-}
-```
-
-**UI**
-
-- Show excerpt in a top card.
-- Tone segmented control optional; default generate returns five tones.
-- Each `VariantCard` has Copy and Share buttons.
-- Show `ProgressView` while `isLoading == true`.
+- User edits extracted text in `TextEditor`
+- "Generate Posts" calls `AIClient.shared.generateVariants(from: editedText, bookTitle: nil, author: nil)`
+- Results displayed in `VariantsView` sheet
+- Each variant has Copy and Share functionality
 
 ---
 
@@ -324,7 +310,8 @@ enum AIConfig {
 
 **Implementation**
 
-- File: `Features/Share/ShareView.swift` using `UIActivityViewController` wrapper.
+- Share functionality is now integrated into the `VariantsView` in `ContentView.swift`
+- Uses `UIActivityViewController` directly for sharing
 
 **Contract**
 
@@ -332,13 +319,14 @@ enum AIConfig {
 - Present activity controller:
 
   ```swift
-  let vc = UIActivityViewController(activityItems: [variantText], applicationActivities: nil)
-  vc.completionWithItemsHandler = { activityType, completed, returnedItems, error in
-      if completed { HistoryStore.shared.add(HistoryItem(from: variant)) }
-  }
+  let activityVC = UIActivityViewController(
+    activityItems: [variantText],
+    applicationActivities: nil
+  )
   ```
 
-- If LinkedIn not installed, the share sheet still shows "Copy" and "Post to LinkedIn (via web)" might not be available. Offer explicit "Copy" action fallback.
+- If LinkedIn not installed, the share sheet still shows "Copy" and "Post to LinkedIn (via web)" might not be available
+- Each variant has its own Copy and Share buttons for immediate action
 
 ---
 
@@ -477,40 +465,33 @@ Content-Type: application/json
 ## Folder structure (updated)
 
 ```
-SparkPost/
-├── SparkPostApp.swift
+SnapPost/
+├── SnapPostApp.swift
+├── ContentView.swift (main interface with inline generation)
 ├── Features/
 │   ├── Scanner/
 │   │   ├── ImageCaptureView.swift
 │   │   ├── ImagePicker.swift
 │   │   └── PhotoPicker.swift
-│   ├── Composer/
-│   │   ├── ComposerView.swift
-│   │   └── ComposeVM.swift
 │   ├── History/
 │   │   ├── HistoryView.swift
 │   │   └── HistoryStore.swift
-│   ├── Share/
-│   │   └── ShareView.swift
 │   └── Intents/
 │       └── ScanToDraftIntent.swift
 ├── Models/
 │   ├── Variant.swift
+│   ├── Tone.swift
 │   └── ExcerptCapture.swift
 ├── Services/
 │   ├── ImageOCR/
 │   │   └── ImageProcessor.swift
-│   ├── AI/
-│   │   ├── AIClient.swift
-│   │   └── Prompt.swift
-│   └── Storage/
-│       └── HistoryStore.swift
+│   └── AI/
+│       ├── AIClient.swift
+│       ├── AIConfig.swift
+│       └── Prompt.swift
 ├── Utilities/
-│   ├── TextCleaner.swift
-│   └── Extensions.swift
-├── Resources/
-│   ├── Assets.xcassets
-│   └── Preview Content
+│   └── TextCleaner.swift
+├── Assets.xcassets
 └── Info.plist
 ```
 
@@ -553,11 +534,14 @@ Add or verify these keys in `Info.plist`:
 - **Do** implement `ImageProcessor.process(image:)` exactly as specified: rectangle detection → perspective correction → optional enhancement → `VNRecognizeTextRequest` → ordering → `TextCleaner.clean`.
 - **Do** scale down very large images to `maxImageWidthForProcessing` before Vision work to control CPU and memory.
 - **Do** expose tuning parameters in `ImageProcessor.Config` so testers can adjust `yTolerancePixels` and `maxImageWidthForProcessing` without code changes.
-- **Do** store history in `Application Support/SparkPost/history.json` as a JSON array with max length 20.
+- **Do** store history in `Application Support/SnapPost/history.json` as a JSON array with max length 20.
 - **Do not** call any LinkedIn REST API in v1. Use share sheet only.
 - **Do** configure OpenAI API key in app configuration for v1 personal use (no user management)
 - **Do** include unit tests for `TextCleaner.clean(...)` and `orderAndExtractLines(...)` using synthetic bounding boxes and example OCR text.
 - **Do** show friendly retry UI for AI timeouts and for Vision errors. Surface meaningful messages like "Try again with a clearer photo" or "Check network and retry".
+- **✅ COMPLETED**: Post generation is now integrated inline into the main results screen (`ContentView.swift`) - no separate Composer needed
+- **✅ COMPLETED**: Text editing happens directly in the extracted text area with full-height `TextEditor`
+- **✅ COMPLETED**: Share functionality integrated into variant display with `UIActivityViewController`
 
 ---
 
@@ -566,8 +550,8 @@ Add or verify these keys in `Info.plist`:
 - Day 1: Project scaffold, ImageCaptureView + image pickers, Info.plist keys
 - Day 2: Implement ImageProcessor.process(image:) rectangle detection + perspective correction + CI enhancements
 - Day 3: Implement Vision text recognition + ordering + TextCleaner + unit tests
-- Day 4: Composer UI and AIClient stub, wire process -> composer, show mock variants
-- Day 5: Real AI integration, Share sheet, History store, TestFlight build
+- Day 4: ✅ COMPLETED - Inline generation UI integrated into main ContentView, AIClient integration
+- Day 5: Real AI integration, History store, TestFlight build
 
 ---
 
