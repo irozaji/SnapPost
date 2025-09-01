@@ -35,5 +35,11 @@ struct PhotoPicker: View {
         }
       }
     }
+    .onChange(of: selectedImage) { _, newImage in
+      // Reset selectedItem when selectedImage is set to nil from parent
+      if newImage == nil {
+        selectedItem = nil
+      }
+    }
   }
 }
