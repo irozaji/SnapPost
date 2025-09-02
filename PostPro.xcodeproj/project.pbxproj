@@ -385,9 +385,9 @@
 				DEVELOPMENT_TEAM = MB74ZJGDF4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = PostPro/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Post Pro";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_CFBundleIconName = AppIcon;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to capture text from documents.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs photo library access to choose existing images.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -424,9 +424,9 @@
 				DEVELOPMENT_TEAM = MB74ZJGDF4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = PostPro/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Post Pro";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_CFBundleIconName = AppIcon;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to capture text from documents.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs photo library access to choose existing images.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
