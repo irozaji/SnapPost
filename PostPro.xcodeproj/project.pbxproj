@@ -386,7 +386,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PostPro/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Snap Post";
+				INFOPLIST_KEY_CFBundleDisplayName = "Post Pro";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to capture text from documents.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs photo library access to choose existing images.";
@@ -405,6 +405,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -424,7 +425,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PostPro/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Snap Post";
+				INFOPLIST_KEY_CFBundleDisplayName = "Post Pro";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to capture text from documents.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs photo library access to choose existing images.";
@@ -443,6 +444,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
