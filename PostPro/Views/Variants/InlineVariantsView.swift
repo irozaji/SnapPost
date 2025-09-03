@@ -13,17 +13,10 @@ struct InlineVariantsView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
       // Header
-      HStack {
-        Text("Generated Posts")
-          .font(.headline)
-          .foregroundColor(.primary)
-
-        Spacer()
-
-        Text("\(variants.count) variants")
-          .font(.caption)
-          .foregroundColor(.secondary)
-      }
+      Text("Generated Posts")
+        .font(.headline)
+        .foregroundColor(.primary)
+        .frame(maxWidth: .infinity, alignment: .leading)
 
       // Variants list
       LazyVStack(spacing: 16) {

@@ -1,123 +1,120 @@
 ## PostPro v1 — UX/UI Wireframes
 
-### App map (v1, updated)
+### App Flow
 
 ```mermaid
 flowchart TD
   Launch[App Launch] --> Home[Home]
-  Home -- Scan Text (Camera) --> Processing[Processing]
+  Home -- Scan Text --> Processing[Processing]
   Home -- Choose from Library --> Processing
-  Processing --> Results[Results]
-  Results -- Generate Posts --> VariantsSheet[Generated Posts (Sheet)]
-  VariantsSheet -- Dismiss --> Results
+  Processing --> Results[Results: Text Editor + Generate Button]
+  Results -- Generate Posts --> ResultsWithVariants[Results: Text Editor + Inline Variants]
+  ResultsWithVariants -- Tap Variant --> VariantDetail[Variant Detail Page]
+  VariantDetail -- Back --> ResultsWithVariants
   Results -- Home --> Home
   Results -- Scan New --> Processing
-  Home -- History (planned) --> History[HistoryView]
 ```
 
-Notes:
-
-- Implemented: `Home`, `Processing`, `Results`, `VariantsSheet`.
-- Removed: `ComposerView` (functionality integrated inline in `Results`).
-- Planned: `HistoryView`, Quick Entry (App Intent + Lock Screen widget).
-
----
-
-### 1) Home (HomeView, updated)
-
-States: initial (no text).
+### 1. Home Screen
 
 ```text
-NAV: (inline)   [ ]
+Navigation: PostPro
 
-Content
-  Hero section with app icon and description
-  Feature highlights (Instant Capture, AI Generation, Quick Share)
+Content Area:
+  App Icon + Welcome Message
+  Feature Cards:
+    - Instant Text Capture
+    - AI-Powered Post Generation
+    - Quick LinkedIn Sharing
 
-Bottom Action Bar (pinned to safe area)
-  [ camera.viewfinder  Scan Text ]   (Primary, filled, full-width)
-  [ photo.on.rectangle  Choose from Library ]  (Secondary, outline, full-width)
+Actions (Bottom):
+  [📷 Scan Text]          (Primary blue button)
+  [🖼️ Choose from Library] (Secondary gray button)
 ```
 
-Key interactions:
-
-- Scan Text → opens Camera directly (system camera); on confirm processes image.
-- Choose from Library → opens PHPicker; on choose processes image.
-
----
-
-### 2) Processing (ProcessingView, updated)
+### 2. Processing Screen
 
 ```text
-Processing state with smooth loading UI
-  [ Animated processing icon with scaling animation ]
-  [ "Processing Image" title ]
-  [ "Extracting text with OCR..." subtitle ]
-  [ Progress indicator ]
+Navigation: [Back]
+
+Content (Centered):
+  [⚡ Animated Processing Icon]
+  "Processing Image"
+  "Extracting text with OCR..."
+  [Progress Indicator]
 ```
 
-Flow:
-
-- Automatically processes selected image with `ImageProcessor.process(image:)`
-- Shows smooth animations and progress indicators
-- Transitions to Results on success or shows error on failure
-
----
-
-### 3) Results (ContentView with ExtractedTextView, updated)
-
-Sub-states: Editing, Generating, Error.
+### 3. Results Screen (Pre-Generation)
 
 ```text
-NAV: Results (inline)   [Home] [Scan New] [Done when editing]
+Navigation: [🏠 Home] [📷 Scan New] [...More]
 
-Content
-  Editable extracted text (full-height TextEditor with focus management)
+Content:
+  "Extracted Text" (Header)
 
-Bottom Action Bar (pinned)
-  [ sparkles  Generate Posts ]   (Primary, filled, full-width)
+  [Large Text Editor - Fills Available Screen Height]
+  - Extracted text content (editable)
+  - Dynamic height based on screen space
+  - Smooth focus management
 
-Navigation Options
-  Home button (returns to start)
-  Scan New (preserves current state for comparison)
+Actions (Bottom):
+  [✨ Generate Posts] (Primary blue button, pinned to bottom)
 ```
 
-Flow:
-
-- Generate → `AIClient.generateVariants(...)` (mock or real)
-- Text editing happens inline with focus management
-- Clear navigation paths always available
-
-Notes:
-
-- Variant length label turns red if >900.
-- On share complete, basic history log currently uses `UserDefaults` (v1 placeholder).
-
----
-
-### 4) Generated Posts (VariantsView Sheet, updated)
+### 4. Results Screen (Post-Generation)
 
 ```text
-Bottom sheet (medium → large)
-  [title] Generated Posts   [Done]
-  Scrollable variants (5 cards):
-    [tone badge]   {len}/900
-    {text}
-    [ Copy ]  [ Share ]
+Navigation: [🏠 Home] [📷 Scan New] [...More]
+
+Content:
+  "Extracted Text" (Header)
+
+  [Compact Text Editor - 120px height]
+  - Minimized for variants display
+  - Expands when focused for editing
+
+  "Generated Posts" (Header)
+
+  [Scrollable Variants List]
+  - Variant Card 1: [Tone Badge] [Text Preview (3 lines)] [>]
+  - Variant Card 2: [Tone Badge] [Text Preview (3 lines)] [>]
+  - Variant Card 3: [Tone Badge] [Text Preview (3 lines)] [>]
+  - ... (5 variants total)
+
+  Each card shows:
+  - Colored tone badge (Punchy=Orange, Personal=Blue, etc.)
+  - Truncated text with fade effect
+  - Chevron indicating tap to view full content
 ```
 
-Each variant card includes:
+### 5. Variant Detail Screen
 
-- Tone badge with color coding
-- Character count display
-- Copy button with haptic feedback
-- Share button using UIActivityViewController
+```text
+Navigation: [← Back] "Post Details"
 
----
+Content (Scrollable):
+  [Tone Badge] [Character Count]
 
-### Primary flows
+  [Full Post Text - Scrollable]
+  - Complete untruncated post content
+  - Text selection enabled
+  - Proper line spacing and readability
 
-Capture → Process → Edit → Generate → Share
+Actions (Bottom, Fixed):
+  [📋 Copy] [📤 Share] (Side by side, bottom action bar)
+
+  Copy button:
+  - Haptic feedback on tap
+  - Shows "Copied" confirmation briefly
+
+  Share button:
+  - Opens iOS share sheet
+  - Includes post text for sharing
+```
+
+### User Flow
+
+**Main Path: Capture → Process → Edit → Generate → Share**
 
 ```mermaid
 sequenceDiagram
@@ -126,69 +123,54 @@ sequenceDiagram
   participant P as Processing
   participant R as Results
   participant A as AIClient
-  participant V as VariantsView
+  participant D as Detail
 
-  U->>H: Tap Scan Text
-  H->>P: Present processing
-  U->>P: Image processing
-  P-->>R: ExcerptCapture result
-  U->>R: Edit text (optional)
-  U->>R: Tap Generate Posts
-  R->>A: generateVariants(...)
-  A-->>R: [Variant] (5)
-  R->>V: Present variants sheet
-  U->>V: Tap Share
-  V->>U: Present share sheet
-  U->>V: Dismiss sheet
-  V-->>R: Return to results
-  R->>H: Return to home (optional)
+  U->>H: Tap "Scan Text"
+  H->>P: Camera/Library → Processing
+  P-->>R: OCR Extraction Complete
+  U->>R: Review/Edit Text (full-height editor)
+  U->>R: Tap "Generate Posts"
+  R->>A: Generate 5 variants
+  A-->>R: Return variants
+  R->>R: Show inline variants (compact editor)
+  U->>D: Tap variant card
+  D-->>R: Copy/Share actions available
+  U->>R: Navigate back
+  R->>H: Return home (optional)
 ```
 
----
+### Design System
 
-### Design system snapshot (v1 minimal)
+**Colors:**
 
-- Colors: system colors (Blue for primary CTAs, systemGray6 for cards)
-- Typography: system fonts (LargeTitle, Title2, Headline, Subheadline, Body, Caption)
-- Shapes: 12–16pt corner radius on cards and buttons; subtle shadow on cards
-- Icons: SF Symbols as referenced in screens
-- Animations: smooth transitions with .easeInOut timing
-- Focus Management: proper keyboard handling and focus states
+- Primary: Blue (system accent)
+- Cards: systemGray6 background
+- Tone badges: Orange (Punchy), Blue (Personal), Red (Contrarian), Purple (Analytical), Green (Open Question)
 
----
+**Typography:**
 
-### Screen inventory and statuses
+- Headers: Headline
+- Body text: Body font
+- Captions: Caption (for metadata)
 
-- Home (`HomeView`) — ✅ Implemented
-- Processing (`ProcessingView`) — ✅ Implemented
-- Results (`ContentView` with `ExtractedTextView`) — ✅ Implemented
-- Generated Posts (`VariantsView` sheet) — ✅ Implemented
-- History (`HistoryView`, `HistoryStore`) — 🚧 Planned
-- Quick Entry (AppIntent + Widget) — 🚧 Planned
+**Layout:**
 
----
+- Card radius: 12pt
+- Button radius: 8pt
+- Spacing: 12-16pt between elements
+- Safe area aware layouts
 
-### Key UX Improvements Implemented
+**Interactions:**
 
-1. **Advanced Navigation**
+- Haptic feedback on actions
+- Smooth animations (.easeInOut, 0.3s)
+- Focus management for text editing
+- iOS-standard navigation patterns
 
-   - Clear Home button always available
-   - "Scan New" preserves previous state for comparison
-   - Proper iOS navigation patterns with back buttons
+### Key Features
 
-2. **State Management**
-
-   - Smooth transitions between processing states
-   - Text editing with focus management
-   - State preservation for better user experience
-
-3. **UI Polish**
-
-   - Smooth animations and transitions
-   - Proper spacing and iOS-standard design
-   - Haptic feedback for better interaction
-
-4. **Development Tools**
-   - Mock mode for testing without API calls
-   - Comprehensive error handling
-   - Realistic mock responses for development
+✅ **Dynamic Text Editor**: Fills screen height pre-generation, compacts post-generation  
+✅ **Inline Variants**: No modal sheets, variants display directly in results  
+✅ **Tap-to-Detail**: Cards lead to dedicated detail pages for actions  
+✅ **Smart Truncation**: 3-line preview with fade effect for better list density  
+✅ **Navigation Flow**: Proper iOS back navigation with state preservation

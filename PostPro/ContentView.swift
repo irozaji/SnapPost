@@ -53,12 +53,15 @@ struct ContentView: View {
     GeometryReader { geometry in
       VStack(spacing: 0) {
         // Dynamic text editor at top
+        let buttonHeight: CGFloat = (!isTextEditorFocused && generatedVariants.isEmpty) ? 100 : 0
+        let availableHeight = geometry.size.height - buttonHeight - 40  // 40 for padding
+
         VStack(spacing: 12) {
           ExtractedTextView(
             excerpt: excerptCapture!,
             editedText: $editedText,
             isTextEditorFocused: $isTextEditorFocused,
-            dynamicHeight: $textEditorHeight
+            dynamicHeight: .constant(generatedVariants.isEmpty ? availableHeight : textEditorHeight)
           )
         }
         .padding(.horizontal)
@@ -145,7 +148,7 @@ struct ContentView: View {
         excerptCapture = nil
         previousExcerpt = nil  // Clear saved state when explicitly going home
         generatedVariants = []  // Clear variants when going home
-        textEditorHeight = 200  // Reset to default height
+        updateTextEditorHeight()  // Reset using dynamic calculation
       }
     }
     .foregroundColor(.blue)
@@ -229,10 +232,10 @@ struct ContentView: View {
   private func updateTextEditorHeight() {
     if isTextEditorFocused {
       // Expanded mode when focused
-      textEditorHeight = generatedVariants.isEmpty ? 300 : 250
+      textEditorHeight = generatedVariants.isEmpty ? 500 : 250
     } else if generatedVariants.isEmpty {
-      // Comfortable mode when no variants
-      textEditorHeight = 200
+      // Use a large height that will be constrained by the available space in GeometryReader
+      textEditorHeight = 1000  // This will be constrained by the actual available space
     } else {
       // Compact mode when variants are present and not focused
       textEditorHeight = 120
@@ -246,7 +249,7 @@ struct ContentView: View {
       excerptCapture = nil
       previousExcerpt = nil  // Clear saved state since we're processing new image
       generatedVariants = []  // Clear variants when processing new image
-      textEditorHeight = 200  // Reset to default height
+      updateTextEditorHeight()  // Reset using dynamic calculation
       processImage(image)
     }
   }

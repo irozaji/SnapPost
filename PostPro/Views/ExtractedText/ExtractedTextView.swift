@@ -22,7 +22,9 @@ struct ExtractedTextView: View {
       TextEditor(text: $editedText)
         .font(.body)
         .frame(
-          maxWidth: .infinity, minHeight: dynamicHeight, maxHeight: dynamicHeight,
+          maxWidth: .infinity,
+          minHeight: min(dynamicHeight, 120),
+          maxHeight: dynamicHeight,
           alignment: .topLeading
         )
         .background(Color(UIColor.systemGray6))

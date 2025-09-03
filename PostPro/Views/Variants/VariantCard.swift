@@ -26,28 +26,22 @@ struct VariantCard: View {
 
         Spacer()
 
-        HStack(spacing: 8) {
-          Text("\(variant.text.count)/900")
-            .font(.caption)
-            .foregroundColor(.secondary)
-
-          // Chevron to indicate tappability
-          Image(systemName: "chevron.right")
-            .font(.caption2)
-            .foregroundColor(.secondary)
-        }
+        // Chevron to indicate tappability
+        Image(systemName: "chevron.right")
+          .font(.caption2)
+          .foregroundColor(.secondary)
       }
 
       // Truncated text with fade effect
       ZStack(alignment: .bottomTrailing) {
         Text(variant.text)
           .font(.body)
-          .lineLimit(4)
+          .lineLimit(3)
           .multilineTextAlignment(.leading)
           .lineSpacing(2)
 
         // Fade effect overlay for truncated text
-        if variant.text.count > 180 {  // Approximate threshold for 4 lines
+        if variant.text.count > 130 {  // Approximate threshold for 3 lines
           LinearGradient(
             gradient: Gradient(colors: [Color.clear, Color(UIColor.systemBackground)]),
             startPoint: .leading,
