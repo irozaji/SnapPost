@@ -10,10 +10,10 @@ import UIKit
 
 struct VariantCard: View {
   let variant: Variant
-  @State private var isCopied = false
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
+      // Header with tone badge and character count
       HStack {
         Text(variant.tone.displayName)
           .font(.caption)
@@ -23,40 +23,38 @@ struct VariantCard: View {
           .padding(.vertical, 4)
           .background(toneColor(for: variant.tone))
           .cornerRadius(6)
+
         Spacer()
-        Text("\(variant.text.count)/900")
-          .font(.caption)
-          .foregroundColor(.secondary)
-      }
-      Text(variant.text)
-        .font(.body)
-        .lineLimit(nil)
-        .multilineTextAlignment(.leading)
-      HStack(spacing: 12) {
-        Button(action: copyVariant) {
-          HStack {
-            Image(systemName: isCopied ? "checkmark.circle.fill" : "doc.on.doc")
-            Text(isCopied ? "Copied" : "Copy")
-          }
-          .font(.subheadline)
-          .foregroundColor(isCopied ? .green : .blue)
-          .frame(maxWidth: .infinity)
-          .padding(.vertical, 8)
-          .background(Color(UIColor.systemGray6))
-          .cornerRadius(6)
+
+        HStack(spacing: 8) {
+          Text("\(variant.text.count)/900")
+            .font(.caption)
+            .foregroundColor(.secondary)
+
+          // Chevron to indicate tappability
+          Image(systemName: "chevron.right")
+            .font(.caption2)
+            .foregroundColor(.secondary)
         }
-        .disabled(isCopied)
-        Button(action: shareVariant) {
-          HStack {
-            Image(systemName: "square.and.arrow.up")
-            Text("Share")
-          }
-          .font(.subheadline)
-          .foregroundColor(.white)
-          .frame(maxWidth: .infinity)
-          .padding(.vertical, 8)
-          .background(Color.blue)
-          .cornerRadius(6)
+      }
+
+      // Truncated text with fade effect
+      ZStack(alignment: .bottomTrailing) {
+        Text(variant.text)
+          .font(.body)
+          .lineLimit(4)
+          .multilineTextAlignment(.leading)
+          .lineSpacing(2)
+
+        // Fade effect overlay for truncated text
+        if variant.text.count > 180 {  // Approximate threshold for 4 lines
+          LinearGradient(
+            gradient: Gradient(colors: [Color.clear, Color(UIColor.systemBackground)]),
+            startPoint: .leading,
+            endPoint: .trailing
+          )
+          .frame(width: 40, height: 20)
+          .offset(x: 0, y: -2)
         }
       }
     }
@@ -64,28 +62,6 @@ struct VariantCard: View {
     .background(Color(UIColor.systemBackground))
     .cornerRadius(12)
     .shadow(radius: 1)
-  }
-
-  private func copyVariant() {
-    UIPasteboard.general.string = variant.text
-    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-    impactFeedback.impactOccurred()
-    withAnimation(.easeInOut(duration: 0.2)) { isCopied = true }
-    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-      withAnimation(.easeInOut(duration: 0.2)) { isCopied = false }
-    }
-  }
-
-  private func shareVariant() {
-    let activityVC = UIActivityViewController(
-      activityItems: [variant.text],
-      applicationActivities: nil
-    )
-    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-      let window = windowScene.windows.first
-    {
-      window.rootViewController?.present(activityVC, animated: true)
-    }
   }
 
   private func toneColor(for tone: Tone) -> Color {
@@ -103,7 +79,9 @@ struct VariantCard: View {
   VariantCard(
     variant: Variant(
       tone: .punchy,
-      text: "This is a sample punchy LinkedIn post that demonstrates the tone and style.")
+      text:
+        "🚀 This insight completely changed my perspective on leadership. When we think we know everything, we stop growing. The moment I admitted I didn't have all the answers was the moment real progress began. What's the last thing that made you rethink your approach? Sometimes the most powerful thing a leader can do is say 'I don't know' and create space for others to contribute."
+    )
   )
   .padding()
 }

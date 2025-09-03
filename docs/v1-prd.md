@@ -1,4 +1,4 @@
-# PRD: LinkedIn Post Companion (v1) — Image-capture OCR
+# PRD: PostPro (v1) — Image-capture OCR
 
 ## Project overview
 
@@ -37,7 +37,6 @@ Build a native iOS app for personal productivity that lets you capture an image 
 - PHPicker / UIImagePickerController
 - UniformTypeIdentifiers
 - UserNotifications
-- AppIntents
 
 **Swift packages**
 
@@ -52,12 +51,12 @@ Build a native iOS app for personal productivity that lets you capture an image 
 1. **Quick entry**
 
    - User taps Lock Screen widget or app icon.
-   - App opens directly into the Scanner (Image Capture) screen.
+   - App opens directly into the Home screen with clear action buttons.
 
 2. **Capture**
 
-   - User chooses `Take Photo` or `Choose from Library`.
-   - App receives UIImage and shows a preview with a `Use Image` action.
+   - User chooses `Scan Text` (camera) or `Choose from Library`.
+   - App receives UIImage and shows processing state with smooth animations.
 
 3. **Process**
 
@@ -65,9 +64,9 @@ Build a native iOS app for personal productivity that lets you capture an image 
    - Steps inside `process`: detect page rectangle, perspective-correct the image, optional enhancement (contrast), run `VNRecognizeTextRequest`, order lines, clean text.
    - Process returns `ExcerptCapture` with cleaned `text`.
 
-4. **Generate Posts**
+4. **Edit & Generate Posts**
 
-   - Results screen shows extracted text in an editable TextEditor.
+   - Results screen shows extracted text in a full-height editable TextEditor.
    - User can edit the text before generating posts.
    - User taps "Generate Posts" button.
    - AI returns 5 post variants.
@@ -80,47 +79,44 @@ Build a native iOS app for personal productivity that lets you capture an image 
    - User posts inside LinkedIn.
    - App shows success toast.
 
-6. **History**
+6. **Navigation**
 
-   - List of last 20 items (excerpt, variant, timestamp).
-   - Actions: Copy, Share again, Delete.
+   - Clear navigation between Home, Results, and Generated Posts
+   - "Scan New" preserves previous state for comparison
+   - "Home" button always available to return to start
+   - Proper iOS navigation patterns with back buttons
 
 ---
 
 ## Features
 
-1. **Image Capture + ImageProcessor (OCR)**
-2. **Inline Post Generation** (Integrated into main results screen)
-3. **AI generation**
-4. **Share to LinkedIn via share sheet**
-5. **History**
-6. **Quick entry (App Intent + widget)**
+1. **Image Capture + ImageProcessor (OCR)** ✅ COMPLETED
+2. **Inline Text Editing & Post Generation** ✅ COMPLETED
+3. **AI generation with Mock Mode** ✅ COMPLETED
+4. **Share to LinkedIn via share sheet** ✅ COMPLETED
+5. **Advanced Navigation & State Management** ✅ COMPLETED
 
 ---
 
 ## Requirements for each feature
 
-### 1. Scanner (ImageCapture)
+### 1. Scanner (Image Capture)
 
 **High-level**
-Scanner is an image-capture UI that returns a `UIImage` to the `ImageProcessor`. It does not run live OCR. It allows the user to take a photo or pick one from the photo library and then confirm before processing.
+Scanner is an image-capture UI that returns a `UIImage` to the `ImageProcessor`. It does not run live OCR. It allows the user to take a photo or pick one from the photo library and then processes automatically.
 
 **Files / Components**
 
-- `Features/Scanner/ImageCaptureView.swift` (SwiftUI)
-
-  - Binding: `@Binding var result: ExcerptCapture?`
-  - Buttons: `Take Photo`, `Choose from Library`, `Use Image`, `Cancel`
-  - Uses `ImagePicker` (camera) and `PhotoPicker` (PHPicker)
-
-- `Features/Scanner/ImagePicker.swift` and `PhotoPicker.swift` helpers (provided wrappers)
+- `Features/Scanner/ImagePicker.swift` (Camera wrapper)
+- `Features/Scanner/PhotoPicker.swift` (Photo library picker)
+- Integrated into main `ContentView.swift`
 
 **Behavior**
 
-- After selecting image, show preview and `Use Image` button.
-- `Use Image` triggers `ImageProcessor.process(image:)` async and shows `ProgressView`.
-- On success, populate `result` with returned `ExcerptCapture`.
-- On failure, show friendly error with retry.
+- After selecting image, automatically processes with `ImageProcessor.process(image:)`.
+- Shows smooth processing animation with `ProcessingView`.
+- On success, transitions to Results screen with extracted text.
+- On failure, shows friendly error with retry option.
 
 **Permissions**
 
@@ -163,7 +159,7 @@ struct Config {
 }
 ```
 
-**Processing steps (implementation must follow this order)**
+**Processing steps (implementation follows this order)**
 
 1. Normalize image: scale down if needed to `maxImageWidthForProcessing` while keeping aspect ratio.
 2. Run `VNDetectRectanglesRequest` to find page-like rectangle(s).
@@ -202,22 +198,23 @@ private func orderAndExtractLines(from lines: [OCRLine], yTolerance: CGFloat) ->
 
 ---
 
-### 3. Inline Post Generation
+### 3. Inline Text Editing & Post Generation ✅ COMPLETED
 
 **Implementation**
 
-- Post generation is now integrated directly into the main results screen (`ContentView.swift`)
-- No separate Composer view or view model needed
-- Text editing happens inline with the extracted text
+- Post generation is integrated directly into the main results screen (`ContentView.swift`)
+- Text editing happens inline with the extracted text using `TextEditor`
 - Generation triggered directly from "Generate Posts" button
+- Advanced navigation with "Scan New" preserving previous state
 
 **UI Components**
 
 - `TextEditor` for editable extracted text (full-height container)
-- Two primary action buttons: "Copy" and "Generate Posts"
+- Primary action button: "Generate Posts" with loading state
 - Progress indicator during generation
 - Variants displayed in a sheet with individual Copy/Share actions
 - Error handling with retry functionality
+- Navigation toolbar with Home and Scan New options
 
 **Data Flow**
 
@@ -225,10 +222,18 @@ private func orderAndExtractLines(from lines: [OCRLine], yTolerance: CGFloat) ->
 - "Generate Posts" calls `AIClient.shared.generateVariants(from: editedText, bookTitle: nil, author: nil)`
 - Results displayed in `VariantsView` sheet
 - Each variant has Copy and Share functionality
+- "Scan New" preserves current state for comparison
+
+**Navigation Features**
+
+- Clear Home button to return to start
+- "Scan New" option that preserves previous excerpt
+- Proper iOS navigation patterns with back buttons
+- Smooth transitions between states
 
 ---
 
-### 4. AI Generation
+### 4. AI Generation ✅ COMPLETED
 
 **Service interface**
 File: `Services/AI/AIClient.swift`
@@ -281,8 +286,20 @@ enum AIConfig {
     static let temperature = 0.8
     static let topP = 0.9
     static let requestTimeout: TimeInterval = 8
+
+    // Mock mode configuration
+    static let useMockMode = true  // Automatic in DEBUG builds
+    static let mockResponseDelaySeconds: Double = 1.5
 }
 ```
+
+**Mock Mode Features** ✅ COMPLETED
+
+- Automatic mock mode in DEBUG builds
+- Realistic mock responses with proper tone variety
+- Configurable response delay for realistic testing
+- Easy switching between mock and real API modes
+- Comprehensive error handling in both modes
 
 **Behavior**
 
@@ -306,12 +323,13 @@ enum AIConfig {
 
 ---
 
-### 5. Share to LinkedIn
+### 5. Share to LinkedIn ✅ COMPLETED
 
 **Implementation**
 
-- Share functionality is now integrated into the `VariantsView` in `ContentView.swift`
+- Share functionality is integrated into the `VariantsView` in `ContentView.swift`
 - Uses `UIActivityViewController` directly for sharing
+- Each variant has individual Copy and Share buttons
 
 **Contract**
 
@@ -330,7 +348,7 @@ enum AIConfig {
 
 ---
 
-### 6. History (local JSON file)
+### 6. History (local JSON file) 🚧 NOT STARTED
 
 **Implementation**
 
@@ -348,7 +366,7 @@ enum AIConfig {
 
 **Storage**
 
-- Path: `Application Support/SparkPost/history.json`
+- Path: `Application Support/PostPro/history.json`
 - Keep last 20 items. Evict oldest when adding the 21st.
 
 **Model**
@@ -361,23 +379,6 @@ struct HistoryItem: Identifiable, Codable {
     let postedAt: Date
 }
 ```
-
----
-
-### 7. Quick entry (App Intent + widget)
-
-**AppIntent**
-
-- File: `Features/Intents/ScanToDraftIntent.swift`
-- Intent should deep link to `myapp://scan` or call `ImageCaptureView` directly.
-
-**Widget**
-
-- Lock Screen widget that calls the AppIntent and opens the app directly to Image Capture.
-
-**Siri**
-
-- Intent registered with phrase: "Scan to Draft"
 
 ---
 
@@ -465,19 +466,13 @@ Content-Type: application/json
 ## Folder structure (updated)
 
 ```
-SnapPost/
+PostPro/
 ├── SnapPostApp.swift
-├── ContentView.swift (main interface with inline generation)
+├── ContentView.swift (main interface with inline generation and navigation)
 ├── Features/
 │   ├── Scanner/
-│   │   ├── ImageCaptureView.swift
 │   │   ├── ImagePicker.swift
 │   │   └── PhotoPicker.swift
-│   ├── History/
-│   │   ├── HistoryView.swift
-│   │   └── HistoryStore.swift
-│   └── Intents/
-│       └── ScanToDraftIntent.swift
 ├── Models/
 │   ├── Variant.swift
 │   ├── Tone.swift
@@ -491,6 +486,19 @@ SnapPost/
 │       └── Prompt.swift
 ├── Utilities/
 │   └── TextCleaner.swift
+├── Views/
+│   ├── Home/
+│   │   ├── HomeView.swift
+│   │   ├── HomeActionsView.swift
+│   │   └── FeatureRow.swift
+│   ├── ExtractedText/
+│   │   ├── ExtractedTextView.swift
+│   │   └── ExtractedTextActionsView.swift
+│   ├── Processing/
+│   │   └── ProcessingView.swift
+│   └── Variants/
+│       ├── VariantsView.swift
+│       └── VariantCard.swift
 ├── Assets.xcassets
 └── Info.plist
 ```
@@ -534,7 +542,7 @@ Add or verify these keys in `Info.plist`:
 - **Do** implement `ImageProcessor.process(image:)` exactly as specified: rectangle detection → perspective correction → optional enhancement → `VNRecognizeTextRequest` → ordering → `TextCleaner.clean`.
 - **Do** scale down very large images to `maxImageWidthForProcessing` before Vision work to control CPU and memory.
 - **Do** expose tuning parameters in `ImageProcessor.Config` so testers can adjust `yTolerancePixels` and `maxImageWidthForProcessing` without code changes.
-- **Do** store history in `Application Support/SnapPost/history.json` as a JSON array with max length 20.
+- **Do** store history in `Application Support/PostPro/history.json` as a JSON array with max length 20.
 - **Do not** call any LinkedIn REST API in v1. Use share sheet only.
 - **Do** configure OpenAI API key in app configuration for v1 personal use (no user management)
 - **Do** include unit tests for `TextCleaner.clean(...)` and `orderAndExtractLines(...)` using synthetic bounding boxes and example OCR text.
@@ -542,17 +550,36 @@ Add or verify these keys in `Info.plist`:
 - **✅ COMPLETED**: Post generation is now integrated inline into the main results screen (`ContentView.swift`) - no separate Composer needed
 - **✅ COMPLETED**: Text editing happens directly in the extracted text area with full-height `TextEditor`
 - **✅ COMPLETED**: Share functionality integrated into variant display with `UIActivityViewController`
+- **✅ COMPLETED**: Advanced navigation with state preservation and clear user flows
+- **✅ COMPLETED**: Mock mode for development and testing
 
 ---
 
 ## Next steps & day-by-day sprint
 
-- Day 1: Project scaffold, ImageCaptureView + image pickers, Info.plist keys
-- Day 2: Implement ImageProcessor.process(image:) rectangle detection + perspective correction + CI enhancements
-- Day 3: Implement Vision text recognition + ordering + TextCleaner + unit tests
+- Day 1: Project scaffold, ImageCaptureView + image pickers, Info.plist keys ✅ COMPLETED
+- Day 2: Implement ImageProcessor.process(image:) rectangle detection + perspective correction + CI enhancements ✅ COMPLETED
+- Day 3: Implement Vision text recognition + ordering + TextCleaner + unit tests ✅ COMPLETED
 - Day 4: ✅ COMPLETED - Inline generation UI integrated into main ContentView, AIClient integration
-- Day 5: Real AI integration, History store, TestFlight build
+- Day 5: ✅ COMPLETED - Real AI integration, Mock mode, advanced navigation
+- Day 6: History store, TestFlight build 🚧 IN PROGRESS
 
 ---
 
-If you want, I can now generate a single file `Services/ImageOCR/ImageProcessor.swift` (complete, compile-ready) and a small unit test file `Tests/TextCleanerTests.swift` that your AI coding assistant can drop into the project and run. Which one should I produce first?
+## Key Implementation Updates
+
+**✅ COMPLETED FEATURES:**
+
+1. **Advanced Navigation System** - Proper iOS navigation patterns with clear user flows
+2. **State Preservation** - "Scan New" feature preserves previous excerpt for comparison
+3. **Inline Text Editing** - Full-height TextEditor with focus management
+4. **Mock Mode** - Sophisticated development mode with realistic responses
+5. **Error Handling** - Comprehensive error handling with user-friendly messages
+6. **UI Polish** - Smooth animations, proper spacing, and iOS-standard design patterns
+
+**🚧 PLANNED FEATURES:**
+
+1. **History System** - Local JSON storage for post history
+2. **Enhanced Testing** - Unit tests for ImageProcessor and integration tests
+
+The app now provides a much more polished and intuitive user experience with proper navigation, state management, and development tools.

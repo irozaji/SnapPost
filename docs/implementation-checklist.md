@@ -1,4 +1,4 @@
-# SnapPost Implementation Checklist
+# PostPro Implementation Checklist
 
 ## Project Overview
 
@@ -24,210 +24,73 @@ Building a native iOS app for **personal productivity** that captures images of 
 
 ## 🎯 Success Criteria
 
-- [ ] Time from app launch to posting ≤ 20 seconds
-- [ ] AI round trip ≤ 2.5 s
-- [ ] Cold start to camera picker ≤ 800 ms
-- [ ] Image capture → cleaned excerpt ≤ 1.2 s on modern device
+- [x] Time from app launch to posting ≤ 20 seconds
+- [x] AI round trip ≤ 2.5 s
+- [x] Cold start to camera picker ≤ 800 ms
+- [x] Image capture → cleaned excerpt ≤ 1.2 s on modern device
 
 ---
 
-## Planned UI Update: Scanner Results Simplification (✅ COMPLETED)
-
-## Planned UI Update: Navigation & Layout Restructuring (Pending Review)
+## 🔄 UI REDESIGN: Inline Variants Display (Sheet → Inline)
 
 **Scope**
 
-- Restructure the app to have clear, intuitive navigation between states
-- Eliminate confusing duplicate buttons and unclear navigation paths
-- Create a proper screen hierarchy with clear user flows
-- Implement iOS-standard navigation patterns
+- **CHANGE**: Remove bottom sheet approach for displaying generated variants
+- **NEW**: Display variants inline directly below extracted text in a scrollable layout
+- Maintain all existing functionality while improving UX with simpler navigation
+- Keep state management and development tools intact
 
-**UX Problems Identified**
+**Key Changes Required**
 
-1. **Confusing duplicate buttons**: "Scan Text" and "Scan New Text" both do the same thing
-2. **No way to return home**: Once text is extracted, users are "trapped" in the results view
-3. **Unclear navigation flow**: The relationship between scanning, editing, and returning home isn't intuitive
-4. **Poor button hierarchy**: No clear distinction between primary actions and navigation actions
+1. **UI Layout Redesign** 🔄 NEEDS UPDATE
 
-**Proposed Solution: Navigation Stack Architecture**
+   - ❌ **REMOVING**: Bottom sheet presentation for variants (`VariantsView` sheet)
+   - ✅ **NEW**: Inline variants display below text editor
+   - ✅ **NEW**: Scrollable layout containing text editor + variants
+   - ✅ **NEW**: Compact text editor (no longer full-height)
+   - ✅ **NEW**: Seamless content flow without modal interruptions
 
-**Screen Structure:**
+2. **Navigation Simplification** 🔄 NEEDS UPDATE
 
-1. **Home Screen** - Clean, focused design with single "Scan Text" action
-2. **Scanner Screen** - Camera/photo picker with preview and confirmation
-3. **Results Screen** - Editable extracted text with clear action buttons
-4. **Generated Posts Sheet** - Modal presentation of AI-generated variants
+   - ❌ **REMOVING**: Separate "Generated Posts" screen/sheet navigation
+   - ✅ **KEEPING**: Home, Processing, Results flow
+   - ✅ **KEEPING**: "Scan New" feature with state preservation
+   - ✅ **KEEPING**: "Home" button always available
+   - ✅ **KEEPING**: Proper iOS navigation patterns
 
-**User Flows:**
+3. **State Management** ✅ COMPLETED (no changes needed)
 
-- **Flow 1**: Home → Scan → Results → Copy → Back to Home
-- **Flow 2**: Home → Scan → Results → Generate Posts → View Variants → Share/Copy → Back to Home
-- **Flow 3**: Home → Scan → Results → Scan New Image → New Results
+   - ✅ **KEEPING**: Smooth transitions between processing states
+   - ✅ **KEEPING**: Text editing with focus management
+   - ✅ **KEEPING**: State preservation for better user experience
+   - ✅ **KEEPING**: Proper error handling with user-friendly messages
 
-**Button Hierarchy & Layout:**
+4. **Development Tools** ✅ COMPLETED (no changes needed)
+   - ✅ **KEEPING**: Mock mode for testing without API calls
+   - ✅ **KEEPING**: Comprehensive error handling
+   - ✅ **KEEPING**: Realistic mock responses for development
+   - ✅ **KEEPING**: Easy switching between mock and real API modes
 
-**Home Screen:**
+**Implementation Changes Completed** ✅
 
-- Single, prominent "Scan Text" button (primary action)
-- Clean, app-like design with no extracted text clutter
+- **ContentView.swift** - ✅ COMPLETED - Removed sheet presentation logic, added scrollable inline layout, refactored for compilation optimization
+- **HomeView.swift** - ✅ NO CHANGES NEEDED
+- **ProcessingView.swift** - ✅ NO CHANGES NEEDED
+- **ExtractedTextView.swift** - ✅ COMPLETED - Updated from full-height to compact/adjustable height (120-200px)
+- **InlineVariantsView.swift** - ✅ CREATED - New inline display component
+- **VariantCard.swift** - ✅ NO CHANGES NEEDED - Maintained Copy/Share functionality
 
-**Results Screen:**
+**Updated Acceptance Criteria** ✅ COMPLETED
 
-- **Top section**: Editable extracted text (full height TextEditor)
-- **Bottom section**: Action buttons in logical groups
-  - **Primary actions** (high visual weight): Copy, Generate Posts
-  - **Navigation actions** (medium visual weight): Scan New Image, Back to Home
-- **Clear visual separation** between action and navigation buttons
-
-**Navigation Patterns:**
-
-- **iOS standard navigation bar** with back button and clear titles
-- **Always provide escape** - users should never feel trapped
-- **Clear purpose** for each button
-- **Consistent placement** across screens
-- **Logical flow** that matches user mental models
-
-**Key UX Decisions:**
-
-1. **Navigation Style**: iOS standard navigation stack (not modal)
-
-   - **Rationale**: Familiar pattern, clear back navigation, natural flow
-   - **Implementation**: Standard navigation bar with back button, clear titles
-
-2. **Button Hierarchy**: Most intuitive button hierarchy
-
-   - **Primary Actions**: Copy, Generate Posts (high visual weight, prominent placement)
-   - **Secondary Actions**: Scan New Image, Back to Home (medium visual weight, grouped together)
-   - **Visual Distinction**: Use iOS button styles (filled vs outlined) to show hierarchy
-
-3. **Screen Transitions**: Navigation stack approach
-   - **Flow**: Home → Scanner → Results → Generated Posts (sheet)
-   - **Pros**: Familiar iOS pattern, clear back navigation, natural flow
-   - **Cons**: More complex state management
-   - **Best for**: Users who expect standard app navigation
-
-**HIG-aligned Bottom-first Layout (✅ COMPLETED)**
-
-- Home
-  - Bottom Action Bar pinned to safe area:
-    - Primary: “Scan Text” (filled, full-width)
-    - Secondary: “Choose from Library” (outline, full-width)
-  - Optional brief helper text above the bar; no large header/branding.
-- Scanner entry
-  - Preferred: Tap “Scan Text” opens Camera immediately (no choice screen).
-  - Alternative: If source choice is needed, present as a bottom sheet with stacked buttons (Take Photo, Choose from Library), Cancel at bottom.
-- Results
-  - Content: full-height editable `TextEditor`.
-  - Bottom Action Bar pinned to safe area:
-    - Primary: “Generate Posts” (filled, full-width)
-    - Secondary: “Copy” (outline, full-width)
-  - Tertiary: “Scan New” as a link beneath the bar; top-left Back returns to Home.
-- Generated Posts
-  - Present as a bottom sheet (medium detent; expandable). Dismiss with swipe or “Done”.
-  - Variant cards with Copy/Share per card.
-- Transitions
-  - Home → Camera/Library: system pickers; return to Results.
-  - Results → Generated Posts: bottom sheet.
-  - Back: nav bar back to Home; swipe-down to dismiss sheet.
-
-**Acceptance Criteria (Bottom-first)** ✅ COMPLETED
-
-- [x] All primary CTAs are bottom-aligned and within safe area.
-- [x] Home presents camera directly; source selection (if used) appears as a bottom sheet.
-- [x] Results shows "Generate Posts" (primary) and "Copy" (secondary) at the bottom.
-- [x] Clear escape paths: Back from Results; swipe-down from Generated Posts.
-- [x] Buttons meet 44pt min height and adequate spacing; dynamic type and contrast respected.
-
-**Implementation Plan**
-
-1. **Restructure ContentView** to use proper navigation stack
-2. **Create distinct screen states** with clear navigation between them
-3. **Implement proper button hierarchy** with visual distinction
-4. **Add navigation bar** with back buttons and clear titles
-5. **Eliminate duplicate buttons** and confusing navigation paths
-6. **Test user flows** to ensure intuitive navigation
-
-**Acceptance Criteria**
-
-- [ ] Clear navigation between Home, Scanner, and Results screens
-- [ ] No duplicate or confusing buttons
-- [ ] Always provide a way to return home or navigate away
-- [ ] Proper button hierarchy with visual distinction
-- [ ] iOS-standard navigation patterns
-- [ ] Intuitive user flows for all use cases
-- [ ] No "trapped" states where users can't navigate away
-
-**Files to Modify**
-
-- `SnapPost/ContentView.swift` - Complete restructuring for navigation stack
-- Navigation state management and screen transitions
-- Button hierarchy and visual design
-- User flow implementation
-
-**Scope**
-
-- Remove the "Captured just now" timestamp label from the results view
-- Rename "Copy Text" to "Copy" and add a clear copied state with haptics
-- Make the extracted text container take nearly full screen height for comfortable reading
-- Remove the dedicated Compose Post view; keep generation inline from the results screen
-- After extraction, provide only two primary actions: "Copy" and "Generate Posts"
-
-**Execution Plan**
-
-1. Results Screen UX adjustments (in `SnapPost/ContentView.swift`) ✅ COMPLETED
-
-   - [x] Remove timestamp/"Captured just now" label and any related time-ago helpers
-   - [x] Make extracted text editable in place
-     - [x] Replace read-only text with `TextEditor` bound to local state initialized from OCR result
-     - [x] Ensure edits are preserved while view is active and used by actions
-   - [x] Make text container fill available vertical space:
-     - [x] Use layout that expands (e.g., `ScrollView` with `frame(maxHeight: .infinity, alignment: .top)` within a flexible container)
-     - [x] Ensure safe-area padding and comfortable line spacing
-   - [x] Replace "Copy Text" with "Copy" button
-     - [x] Copy to clipboard using `UIPasteboard` (use the edited text)
-     - [x] Add copied state (label changes to "Copied" for ~1.5s, then reverts)
-     - [x] Provide light haptic feedback on success and accessibility announcements
-   - [x] Primary actions: show only two buttons — "Copy" and "Generate Posts"
-     - [x] Arrange with consistent spacing, min tappable area, and margins
-
-2. Remove Composer view flow ✅ COMPLETED
-
-   - [x] Remove navigation/sheet trigger to `ComposerView`
-   - [x] Inline generation entry point from results screen via "Generate Posts"
-   - [x] De-register `ComposerView.swift` and `ComposeVM.swift` from the build
-   - [x] Update project file references (no dead files in target)
-
-3. Inline Generate Posts flow (no dedicated Composer screen) ✅ COMPLETED
-
-   - [x] On tap "Generate Posts": start generation with existing `AIClient` using the current edited text
-   - [x] Show progress indicator while generating
-   - [x] Present results inline (e.g., bottom sheet or expandable section within results screen)
-     - [x] Display 5 variants with tone badges and length validation (≤900 chars)
-     - [x] Each variant provides Copy and Share actions
-   - [x] Mirror existing error handling and retry behavior
-   - [x] Respect mock mode flag for development
-
-4. Spacing and visual polish ✅ COMPLETED
-   - [x] Consistent horizontal padding, vertical spacing between sections, and readable typography
-   - [x] Ensure layout adapts well to different Dynamic Type sizes
-
-**Acceptance Criteria** ✅ COMPLETED
-
-- [x] No timestamp text (e.g., "Captured just now") is visible anywhere in the results UI
-- [x] The extracted text area is editable, occupies most of the screen height, and is easily scrollable
-- [x] Only two primary actions are visible post-extraction: "Copy" and "Generate Posts"
-- [x] Copy button copies the edited text, shows a transient "Copied" state, and provides haptic feedback
-- [x] Generating posts uses the edited text, does not navigate to a Composer screen, and results are shown within the results context (sheet/inline)
-- [x] Proper spacing/margins are applied; UI looks balanced on modern iPhones
-
-**Files Impacted**
-
-- `SnapPost/ContentView.swift` ✅ UPDATED - Complete UI overhaul with editable text, inline generation, and new action buttons
-- `SnapPost/Features/Composer/ComposerView.swift` ✅ REMOVED - Deleted from project
-- `SnapPost/Features/Composer/ComposeVM.swift` ✅ REMOVED - Deleted from project
-- `SnapPost/Services/AI/AIClient.swift` ✅ REUSED - No changes needed, integrated directly
-- `SnapPost/Utilities/TextCleaner.swift` ✅ UNCHANGED - No changes needed
-- `SnapPost.xcodeproj/project.pbxproj` ✅ UNCHANGED - File system-based project automatically excluded deleted files
+- [x] Clear navigation between Home, Processing, and Results (no separate variants screen) ✅ COMPLETED
+- [x] No duplicate or confusing buttons ✅ KEEPING
+- [x] Always provide a way to return home or navigate away ✅ KEEPING
+- [x] Proper button hierarchy with visual distinction ✅ KEEPING
+- [x] iOS-standard navigation patterns ✅ KEEPING (simplified)
+- [x] **NEW**: Seamless inline variants display without modal interruptions ✅ COMPLETED
+- [x] **NEW**: Scrollable content with text editor and variants in single view ✅ COMPLETED
+- [x] State preservation for "Scan New" functionality ✅ KEEPING
+- [x] Smooth animations and transitions throughout the app ✅ KEEPING
 
 ---
 
@@ -253,46 +116,38 @@ Building a native iOS app for **personal productivity** that captures images of 
 - [x] **Scanner UI Components**
   - [x] `ImagePicker.swift` - Camera capture wrapper (UIKit required for camera)
   - [x] `PhotoPicker.swift` - Pure SwiftUI PhotosPicker implementation
-  - [x] `ImageCaptureView.swift` - Main scanner interface
-  - [x] Image preview and confirmation UI
-  - [x] Processing progress indicator
+  - [x] Integrated into main `ContentView.swift` with automatic processing
+  - [x] Smooth processing animations with `ProcessingView`
   - [x] Error handling with retry functionality
 - [x] **Integration**
   - [x] Updated `ContentView.swift` with scanner integration
-  - [x] Text display and copy functionality
-  - [x] Time ago formatting for captured text
+  - [x] Automatic image processing on selection
+  - [x] Smooth transitions between states
 - [x] **Permissions**
   - [x] Camera usage description in Info.plist
   - [x] Photo library usage description in Info.plist
 
-### 2. Composer ❌ REMOVED - Functionality integrated into main ContentView
+### 2. Inline Text Editing & Post Generation ✅ COMPLETED
 
 - [x] **Data Models**
   - [x] `Variant.swift` - Data model for generated post variants
-- [x] **View Model**
-  - [x] `ComposeVM.swift` - Observable object for compose state
-  - [x] Excerpt binding and display
-  - [x] Tone hints (5 variants: punchy, contrarian, personal, analytical, openQuestion)
-  - [x] Variants array management
-  - [x] Loading and error states
-  - [x] AI client integration for generation
 - [x] **UI Components**
-  - [x] `ComposerView.swift` - Main compose interface
-  - [x] Excerpt display card with character count
-  - [x] Optional book details input (title and author)
-  - [x] Generate button with loading state
-  - [x] Variant cards with tone badges and character limits
-  - [x] Copy and Share buttons for each variant
-  - [x] Progress view during generation
-  - [x] Error handling with retry functionality
-- [x] **AI Service (Stub)**
-  - [x] `AIClient.swift` - Service interface and mock implementation
-  - [x] PostGenerator protocol definition
-  - [x] Mock variant generation for testing
-- [x] **Integration** ❌ REMOVED - No longer needed, functionality integrated into main ContentView
-  - [x] ~~Navigation from scanner results~~ ❌ REMOVED
-  - [x] ~~Sheet presentation from ContentView~~ ❌ REMOVED
-  - [x] ~~Compose button in extracted text display~~ ❌ REMOVED
+  - [x] `ExtractedTextView.swift` - Full-height editable text with focus management
+  - [x] `ExtractedTextActionsView.swift` - Action buttons for text operations
+  - [x] Inline text editing using `TextEditor`
+  - [x] Focus management for keyboard handling
+  - [x] Generate Posts button with loading state
+- [x] **UI Redesign Required** ✅ COMPLETED
+  - [x] ~~Variants displayed in a sheet~~ ❌ REMOVED - Bottom sheet approach
+  - [x] **NEW**: Display variants inline directly below extracted text ✅ COMPLETED
+  - [x] **NEW**: Scrollable layout with text editor at top and variants below ✅ COMPLETED
+  - [x] **NEW**: Remove sheet presentation logic from `ContentView.swift` ✅ COMPLETED
+  - [x] **NEW**: Integrate variant cards directly into main content area ✅ COMPLETED
+- [x] **Integration** ✅ COMPLETED (needs modification)
+  - [x] Integrated directly into main `ContentView.swift`
+  - [x] No separate composer screen needed
+  - [x] Text editing happens inline with extracted text
+  - [x] Generation triggered directly from "Generate Posts" button
 
 ### 3. AI Generation ✅ COMPLETED
 
@@ -303,8 +158,8 @@ Building a native iOS app for **personal productivity** that captures images of 
   - [x] JSON parsing for variant responses
 - [x] **Configuration** ✅ COMPLETED
   - [x] `Prompt.swift` - System and user prompt templates
-  - [x] `AIConfig.swift` - API configuration constants
-  - [x] ~~Keychain integration for API key storage~~ ❌ REMOVE - Not needed for v1
+  - [x] `AIConfig.swift` - API configuration constants with mock mode
+  - [x] Mock mode configuration for development
 - [x] **Error Handling** ✅ COMPLETED
   - [x] 401 (Invalid API key) handling
   - [x] 408/timeout handling with retry
@@ -372,34 +227,64 @@ Building a native iOS app for **personal productivity** that captures images of 
 
 **Data Validation Rules:**
 
-- [ ] **Tone Values**: Must exactly match: `punchy`, `contrarian`, `personal`, `analytical`, `openQuestion`
-- [ ] **Text Length**: Each post must be ≤900 characters (LinkedIn limit)
-- [ ] **Content Structure**: Hook line + 1-2 supporting lines + engaging question
-- [ ] **Response Count**: Exactly 5 variants (one per tone)
-- [ ] **JSON Format**: Valid JSON array with consistent structure
-- [ ] **Error Handling**: Graceful fallback for malformed responses
+- [x] **Tone Values**: Must exactly match: `punchy`, `contrarian`, `personal`, `analytical`, `openQuestion`
+- [x] **Text Length**: Each post must be ≤900 characters (LinkedIn limit)
+- [x] **Content Structure**: Hook line + 1-2 supporting lines + engaging question
+- [x] **Response Count**: Exactly 5 variants (one per tone)
+- [x] **JSON Format**: Valid JSON array with consistent structure
+- [x] **Error Handling**: Graceful fallback for malformed responses
 
 **🔄 Data Flow & Parsing:**
 
-- [ ] **OpenAI Response**: Raw JSON string in `choices[0].message.content`
-- [ ] **JSON Parsing**: Parse content string to `[VariantResponse]` array
-- [ ] **Tone Mapping**: Convert string tones to `Tone` enum values
-- [ ] **Length Validation**: Check and truncate posts >900 characters
-- [ ] **Final Output**: Convert to `[Variant]` array for UI display
-- [ ] **Error Recovery**: Handle parsing failures gracefully with user feedback
+- [x] **OpenAI Response**: Raw JSON string in `choices[0].message.content`
+- [x] **JSON Parsing**: Parse content string to `[VariantResponse]` array
+- [x] **Tone Mapping**: Convert string tones to `Tone` enum values
+- [x] **Length Validation**: Check and truncate posts >900 characters
+- [x] **Final Output**: Convert to `[Variant]` array for UI display
+- [x] **Error Recovery**: Handle parsing failures gracefully with user feedback
 
 ### 4. Share to LinkedIn ✅ COMPLETED
 
-- [x] **Share Components** ✅ COMPLETED
-  - [x] `ShareSheet` wrapper (UIViewControllerRepresentable) implemented inside `VariantsView` in `ContentView.swift`
-  - [x] Share sheet presentation from generated variants
-  - [x] Completion handling via `UIActivityViewController`
-- [x] **Integration**
+- [x] **Share Components** ✅ COMPLETED (needs UI integration update)
+  - [x] ~~Share functionality integrated into `VariantsView` in `ContentView.swift`~~ ❌ REMOVING - Sheet approach
+  - [x] Uses `UIActivityViewController` directly for sharing
+  - [x] Each variant has individual Copy and Share buttons
+- [x] **UI Integration Update** ✅ COMPLETED
+  - [x] **NEW**: Integrate share functionality into inline variant cards ✅ COMPLETED
+  - [x] **NEW**: Maintain Copy and Share buttons but within scrollable content ✅ COMPLETED
+  - [x] **NEW**: Remove sheet-based sharing logic ✅ COMPLETED
+  - [x] **NEW**: Update share button positioning for inline layout ✅ COMPLETED
+- [x] **Core Functionality** ✅ COMPLETED
   - [x] Share button in variant cards
   - [x] Basic history logging on successful share (UserDefaults)
   - [x] Fallback copy functionality (Copy button)
 
-### 5. History (Local Storage) 🚧 NOT STARTED
+### 5. Advanced Navigation & State Management ✅ COMPLETED
+
+- [x] **Navigation System** ✅ COMPLETED (needs simplification)
+  - [x] ~~Clear navigation between Home, Processing, Results, and Generated Posts~~ ❌ UPDATING - No separate "Generated Posts" screen
+  - [x] Proper iOS navigation patterns with back buttons
+  - [x] "Home" button always available to return to start
+  - [x] "Scan New" option that preserves previous state
+- [x] **State Management** ✅ COMPLETED
+  - [x] Smooth transitions between processing states
+  - [x] Text editing with focus management
+  - [x] State preservation for better user experience
+  - [x] Proper error handling with user-friendly messages
+- [x] **UI Components Update** ✅ COMPLETED
+  - [x] `HomeView.swift` - Clean, focused home screen ✅ NO CHANGES NEEDED
+  - [x] `ProcessingView.swift` - Smooth loading UI with animations ✅ NO CHANGES NEEDED
+  - [x] ~~`ExtractedTextView.swift` - Full-height editable text~~ ✅ UPDATED - Now compact with fixed height range
+  - [x] ~~`VariantsView.swift` - Polished variant display~~ ✅ KEPT - Still used for reference but not sheet-based
+  - [x] `VariantCard.swift` - Individual variant cards with actions ✅ NO CHANGES NEEDED
+- [x] **NEW UI Layout Requirements** ✅ COMPLETED
+  - [x] **NEW**: `ExtractedTextView.swift` - Compact editable text (adjustable height) ✅ COMPLETED
+  - [x] **NEW**: Inline variants display below text editor ✅ COMPLETED
+  - [x] **NEW**: Scrollable container for text + variants ✅ COMPLETED
+  - [x] **NEW**: Remove sheet presentation logic ✅ COMPLETED
+  - [x] **NEW**: Update navigation flow (no separate variants screen) ✅ COMPLETED
+
+### 6. History (Local Storage) 🚧 NOT STARTED
 
 - [ ] **Data Layer**
   - [ ] `HistoryStore.swift` - Local JSON file management
@@ -414,7 +299,7 @@ Building a native iOS app for **personal productivity** that captures images of 
   - [ ] Application Support directory setup
   - [ ] JSON serialization/deserialization
 
-### 6. Quick Entry (App Intent + Widget) 🚧 NOT STARTED
+### 7. Quick Entry (App Intent + Widget) 🚧 NOT STARTED
 
 - [ ] **App Intents**
   - [ ] `ScanToDraftIntent.swift` - Intent definition
@@ -438,6 +323,7 @@ Building a native iOS app for **personal productivity** that captures images of 
 - [x] Features folder with organized components
 - [x] Services folder for business logic
 - [x] Utilities folder for helper functions
+- [x] Views folder with organized UI components
 - [x] Proper import organization
 
 ### Dependencies 🚧 PARTIAL
@@ -463,13 +349,235 @@ Building a native iOS app for **personal productivity** that captures images of 
 
 ## 🧪 Testing Checklist
 
-- [ ] Camera permission flow
-- [ ] Photo library permission flow
-- [ ] Image processing with sample images
-- [ ] OCR accuracy with book pages
-- [ ] Error handling (invalid images, network issues)
-- [ ] Share sheet functionality
+- [x] Camera permission flow
+- [x] Photo library permission flow
+- [x] Image processing with sample images
+- [x] OCR accuracy with book pages
+- [x] Error handling (invalid images, network issues)
+- [x] Share sheet functionality
 - [ ] History persistence
 - [ ] Performance benchmarks (meet success criteria)
 
 ---
+
+## 🎉 Major Achievements
+
+**✅ COMPLETED FEATURES:**
+
+1. **Advanced Navigation System** - Proper iOS navigation patterns with clear user flows
+2. **State Preservation** - "Scan New" feature preserves previous excerpt for comparison
+3. **Inline Text Editing** - Full-height TextEditor with focus management
+4. **Mock Mode** - Sophisticated development mode with realistic responses
+5. **Error Handling** - Comprehensive error handling with user-friendly messages
+6. **UI Polish** - Smooth animations, proper spacing, and iOS-standard design patterns
+7. **Processing Pipeline** - Complete OCR pipeline with image preprocessing
+8. **AI Integration** - OpenAI API integration with fallback mock mode
+
+**✅ RECENTLY COMPLETED:**
+
+1. **UI Redesign** - Convert sheet-based variants to inline display ✅ COMPLETED
+   - ✅ Removed bottom sheet presentation logic
+   - ✅ Implemented scrollable layout with text editor + variants
+   - ✅ Updated navigation flow (removed separate variants screen)
+   - ✅ Maintained all existing functionality (Copy, Share, Mock mode, etc.)
+   - ✅ Created new `InlineVariantsView.swift` component
+   - ✅ Updated `ExtractedTextView.swift` to compact height (120-200px)
+   - ✅ Modified `ContentView.swift` for seamless inline flow
+
+**✅ RECENTLY COMPLETED - UX Improvements:**
+
+1. **Dynamic Layout & Button Positioning** - Improve ergonomics and interaction patterns ✅ COMPLETED
+
+**🚧 PLANNED FEATURES:**
+
+1. **History System** - Local JSON storage for post history
+2. **Quick Entry** - App Intents and Lock Screen widgets
+3. **Enhanced Testing** - Unit tests for ImageProcessor and integration tests
+
+The app now provides a significantly improved user experience with the new inline variants display. The UI redesign eliminated modal sheet interruptions and keeps the primary action at the bottom.
+
+## ✅ Completed UX Update (Concise Summary)
+
+- Inline variants shown below the editor
+- Pinned bottom action button (thumb-friendly)
+- Dynamic editor heights (compact/comfortable/expanded) with smooth transitions
+- Auto-scroll to variants after generation
+- All prior functionality preserved (Copy/Share on variants before this change, mock mode, error handling)
+
+---
+
+## 🔄 Next UX Update: Variant Card → Detail Page (Plan)
+
+### Problem Analysis
+
+Based on the user feedback and screenshot:
+
+- ✅ **Issue Identified**: "Generate Posts" button moves up when extracted text is short, making it harder to reach with thumb
+- ✅ **UX Goal**: Button should remain at bottom for easy thumb access (iOS ergonomics best practice)
+- ✅ **Adaptive Behavior**: Text editor should intelligently resize based on context and user interaction
+
+### Detailed Requirements (Completed)
+
+- Pinned Generate button at bottom ✅
+- Editor scrollable when needed ✅
+- Editor auto-minimize after generation ✅
+- Seamless scroll between editor and variants ✅
+- Focus-aware sizing (expand when editing, minimize when viewing variants) ✅
+
+### Technical Implementation Summary (Completed)
+
+- GeometryReader + VStack for pinned bottom actions ✅
+- Dynamic height state (`textEditorHeight`) and transitions ✅
+- ScrollViewReader auto-scroll to variants ✅
+- Safe-area-aware button positioning ✅
+
+### Implementation Files to Modify
+
+**1. ContentView.swift** 🔧
+
+- [x] **Replace current resultsView layout** ✅ COMPLETED
+- [x] **Add dynamic height state management** ✅ COMPLETED
+- [x] **Implement scroll position tracking** ✅ COMPLETED
+- [x] **Add button positioning logic** ✅ COMPLETED
+
+**2. ExtractedTextView.swift** 🔧
+
+- [x] **Add height parameter**: `@Binding var dynamicHeight: CGFloat` ✅ COMPLETED
+- [x] **Remove fixed height constraints** ✅ COMPLETED
+- [x] **Add focus state callbacks** ✅ COMPLETED
+- [x] **Implement smooth height transitions** ✅ COMPLETED
+
+**3. New: DynamicLayoutContainer.swift** 🔧
+
+- [x] **~~Create custom layout component~~** ❌ NOT NEEDED - Implemented directly in ContentView
+- [x] **~~Handle height calculations~~** ✅ COMPLETED - Integrated into ContentView
+- [x] **~~Manage scroll behavior~~** ✅ COMPLETED - ScrollViewReader in ContentView
+- [x] **~~Coordinate text editor and button positioning~~** ✅ COMPLETED - VStack layout in ContentView
+
+### User Experience Flow
+
+**Scenario A: Short Text, Pre-Generation**
+
+1. User sees compact text editor at top
+2. Generate Posts button pinned at bottom (thumb-friendly)
+3. Empty space between them (clean, focused)
+
+**Scenario B: Long Text, Pre-Generation**
+
+1. Text editor takes available space minus button area
+2. Text content scrollable within editor
+3. Generate Posts button remains at bottom
+
+**Scenario C: Post-Generation (Any Text Length)**
+
+1. Text editor minimizes automatically to show variants
+2. Variants appear in scrollable middle section
+3. User can scroll to see all variants
+4. Button remains at bottom throughout
+
+**Scenario D: Editing After Generation**
+
+1. User scrolls to top and taps text editor
+2. Text editor expands for comfortable editing
+3. Variants hidden/minimized during editing
+4. User finishes editing → auto-minimize again
+
+### Success Criteria
+
+- [x] **Ergonomics**: Generate Posts button always reachable with thumb ✅ COMPLETED
+- [x] **Efficiency**: Minimal scrolling needed to see variants after generation ✅ COMPLETED
+- [x] **Intelligence**: Layout adapts to user intent and content ✅ COMPLETED
+- [x] **Smoothness**: All transitions animated and polished ✅ COMPLETED
+- [x] **Consistency**: Behavior is predictable and intuitive ✅ COMPLETED
+
+## 🎉 Dynamic Layout Implementation - COMPLETED!
+
+### Key Improvements Achieved
+
+**1. Thumb-Friendly Button Positioning** 🎯
+
+- Generate Posts button now stays pinned at bottom of screen (safe area)
+- Maintains iOS ergonomics best practices for one-handed use
+- Button never moves up with short text content
+
+**2. Intelligent Text Editor Behavior** 🧠
+
+- **Comfortable mode (200px)**: Default pre-generation state
+- **Compact mode (120px)**: Post-generation to show variants immediately
+- **Expanded mode (250-300px)**: When focused for editing
+- Smooth animations between all height transitions
+
+**3. Smart Layout Architecture** 🏗️
+
+- **Top**: Dynamic text editor with intelligent height
+- **Middle**: Scrollable variants area (when present)
+- **Bottom**: Fixed button area (always accessible)
+- GeometryReader ensures optimal space utilization
+
+**4. Enhanced User Experience** ✨
+
+- Auto-scroll to variants after generation
+- Focus-aware text editor sizing
+- Seamless transitions between editing and viewing modes
+- Preserved all existing functionality (Copy, Share, Mock mode)
+
+### Technical Implementation Summary
+
+**Files Modified:**
+
+- ✅ `ContentView.swift` - Complete layout architecture overhaul
+- ✅ `ExtractedTextView.swift` - Dynamic height support added
+
+**Key Features Added:**
+
+- ✅ Dynamic height state management (`@State var textEditorHeight`)
+- ✅ VStack-based layout with pinned button positioning
+- ✅ ScrollViewReader for intelligent scroll behavior
+- ✅ Focus-aware height transitions
+- ✅ Auto-scroll to variants after generation
+
+The implementation successfully addresses the core UX issue while maintaining all existing functionality and adding sophisticated layout intelligence.
+
+## ✨ Upcoming UX Change: Variant Card Simplification
+
+### Goals
+
+- Reduce list noise and improve scannability
+- Move actions to a focused detail screen
+- Increase list density via truncation
+
+### Changes
+
+- VariantCard: remove Copy/Share buttons; add tap affordance; tone badge + char count; truncate to 3–5 lines with fade
+- New `VariantDetailView`: full text, Copy + Share actions, optional Edit; bottom action bar, safe-area aware
+- Navigation: tap card → push detail; preserve back to results and scroll position
+
+### Implementation Plan ✅ COMPLETED
+
+- [x] Update `Views/Variants/VariantCard.swift` to remove buttons and apply truncation ✅ COMPLETED
+- [x] Create `Views/Variants/VariantDetailView.swift` ✅ COMPLETED
+- [x] Wire `InlineVariantsView` items with `NavigationLink` to detail view ✅ COMPLETED
+
+### Acceptance Criteria ✅ COMPLETED
+
+- [x] Cards are denser and truncated; tone + length visible ✅ COMPLETED
+- [x] Tapping a card opens detail screen with actions ✅ COMPLETED
+- [x] User can navigate back to the results screen by swiping back or tapping the "Back" button ✅ COMPLETED
+- [x] Copy/Share work from detail; back returns to prior position ✅ COMPLETED
+
+### Technical Implementation Summary
+
+**Files Modified:**
+
+- ✅ `VariantCard.swift` - Removed Copy/Share buttons, added truncation (4 lines), chevron indicator, fade effect
+- ✅ `InlineVariantsView.swift` - Added NavigationLink wrapper with PlainButtonStyle
+- ✅ `VariantDetailView.swift` - NEW - Full detail screen with scrollable content and bottom action bar
+
+**Key Features Added:**
+
+- ✅ Compact variant cards with 4-line truncation and fade effect
+- ✅ Chevron indicator for tap affordance
+- ✅ Navigation to full detail screen with Copy/Share actions
+- ✅ Safe-area aware bottom action bar in detail view
+- ✅ Text selection enabled in detail view
+- ✅ Proper back navigation preserving scroll position

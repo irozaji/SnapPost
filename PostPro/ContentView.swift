@@ -17,104 +17,188 @@ struct ContentView: View {
   @State private var isCopied = false
   @State private var isGenerating = false
   @State private var generatedVariants: [Variant] = []
-  @State private var showingVariants = false
   @State private var generationError: String?
   @State private var processingError: String?
   @State private var previousExcerpt: ExcerptCapture?  // Track previous state for "Scan New"
   @FocusState private var isTextEditorFocused: Bool
 
+  // Dynamic layout state
+  @State private var textEditorHeight: CGFloat = 200
+  @State private var scrollPosition: CGFloat = 0
+
   private let imageProcessor = ImageProcessor()
+
+  // MARK: - Computed Properties
+
+  @ViewBuilder
+  private var mainContent: some View {
+    if isProcessing {
+      processingView
+    } else if excerptCapture != nil {
+      resultsView
+    } else {
+      homeView
+    }
+  }
+
+  private var processingView: some View {
+    VStack(spacing: 16) {
+      ProcessingView(isProcessing: isProcessing)
+    }
+    .padding()
+    .navigationBarTitleDisplayMode(.inline)
+  }
+
+  private var resultsView: some View {
+    GeometryReader { geometry in
+      VStack(spacing: 0) {
+        // Dynamic text editor at top
+        VStack(spacing: 12) {
+          ExtractedTextView(
+            excerpt: excerptCapture!,
+            editedText: $editedText,
+            isTextEditorFocused: $isTextEditorFocused,
+            dynamicHeight: $textEditorHeight
+          )
+        }
+        .padding(.horizontal)
+        .padding(.top)
+
+        // Scrollable variants area (if variants exist)
+        if !generatedVariants.isEmpty {
+          ScrollViewReader { proxy in
+            ScrollView {
+              LazyVStack(spacing: 16) {
+                InlineVariantsView(variants: generatedVariants)
+                  .id("variants")
+              }
+              .padding(.horizontal)
+              .padding(.top, 16)
+            }
+            .onAppear {
+              // Auto-scroll to show variants immediately after generation
+              DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                  proxy.scrollTo("variants", anchor: .top)
+                }
+              }
+            }
+          }
+        } else {
+          // Spacer to push button to bottom when no variants
+          Spacer()
+        }
+
+        // Fixed bottom button area
+        VStack(spacing: 0) {
+          if !isTextEditorFocused && generatedVariants.isEmpty {
+            ExtractedTextActionsView(
+              editedText: editedText,
+              isGenerating: isGenerating,
+              onGeneratePosts: generatePosts
+            )
+            .padding(.horizontal)
+            .padding(.top, 16)
+          }
+        }
+        .padding(.bottom)
+      }
+    }
+    .navigationBarTitleDisplayMode(.inline)
+    .onAppear {
+      updateTextEditorHeight()
+    }
+    .onChange(of: isTextEditorFocused) { _, focused in
+      withAnimation(.easeInOut(duration: 0.3)) {
+        updateTextEditorHeight()
+      }
+    }
+    .onChange(of: generatedVariants.isEmpty) { _, isEmpty in
+      withAnimation(.easeInOut(duration: 0.3)) {
+        updateTextEditorHeight()
+      }
+    }
+  }
+
+  private var homeView: some View {
+    VStack(spacing: 16) {
+      HomeView(
+        onScanCamera: { showingCamera = true },
+        onChooseFromLibrary: { showingPhotoPicker = true }
+      )
+
+      HomeActionsView(
+        onScanCamera: { showingCamera = true },
+        onChooseFromLibrary: { showingPhotoPicker = true }
+      )
+    }
+    .padding()
+    .navigationBarTitleDisplayMode(.inline)
+  }
+
+  private var homeButton: some View {
+    Button("Home") {
+      // Reset selectedImage immediately to clear PhotoPicker state
+      selectedImage = nil
+      withAnimation(.easeInOut(duration: 0.3)) {
+        editedText = ""
+        excerptCapture = nil
+        previousExcerpt = nil  // Clear saved state when explicitly going home
+        generatedVariants = []  // Clear variants when going home
+        textEditorHeight = 200  // Reset to default height
+      }
+    }
+    .foregroundColor(.blue)
+  }
+
+  private var trailingToolbarContent: some View {
+    HStack(spacing: 16) {
+      // Actions menu
+      Menu {
+        Button(action: {
+          // Save current state before opening camera
+          previousExcerpt = excerptCapture
+          showingCamera = true
+        }) {
+          Label("Scan New", systemImage: "camera.viewfinder")
+        }
+
+        Button(action: {
+          showingPhotoPicker = true
+        }) {
+          Label("Choose from Library", systemImage: "photo.on.rectangle")
+        }
+      } label: {
+        Image(systemName: "ellipsis.circle")
+          .font(.title2)
+          .foregroundColor(.blue)
+      }
+
+      // Done button (only when editing)
+      if isTextEditorFocused {
+        Button("Done") {
+          isTextEditorFocused = false
+        }
+        .foregroundColor(.blue)
+        .fontWeight(.semibold)
+      }
+    }
+  }
 
   var body: some View {
     NavigationView {
-      VStack(spacing: 16) {
-        // Content Area
-        if isProcessing {
-          ProcessingView(isProcessing: isProcessing)
-        } else if let excerpt = excerptCapture {
-          ExtractedTextView(
-            excerpt: excerpt,
-            editedText: $editedText,
-            isTextEditorFocused: $isTextEditorFocused
-          )
-        } else {
-          HomeView(
-            onScanCamera: { showingCamera = true },
-            onChooseFromLibrary: { showingPhotoPicker = true }
-          )
-        }
+      mainContent
+        .toolbar {
+          if excerptCapture != nil {
+            ToolbarItem(placement: .navigationBarLeading) {
+              homeButton
+            }
 
-        // Bottom Action Bar
-        VStack(spacing: 12) {
-          if excerptCapture == nil {
-            HomeActionsView(
-              onScanCamera: { showingCamera = true },
-              onChooseFromLibrary: { showingPhotoPicker = true }
-            )
-          } else {
-            // Results actions - hide when keyboard is active
-            if !isTextEditorFocused {
-              ExtractedTextActionsView(
-                editedText: editedText,
-                isGenerating: isGenerating,
-                onGeneratePosts: generatePosts
-              )
+            ToolbarItem(placement: .navigationBarTrailing) {
+              trailingToolbarContent
             }
           }
         }
-      }
-      .padding()
-      .navigationBarTitleDisplayMode(.inline)
-      .toolbar {
-        if excerptCapture != nil {
-          ToolbarItem(placement: .navigationBarLeading) {
-            Button("Home") {
-              // Reset selectedImage immediately to clear PhotoPicker state
-              selectedImage = nil
-              withAnimation(.easeInOut(duration: 0.3)) {
-                editedText = ""
-                excerptCapture = nil
-                previousExcerpt = nil  // Clear saved state when explicitly going home
-              }
-            }
-            .foregroundColor(.blue)
-          }
-
-          ToolbarItem(placement: .navigationBarTrailing) {
-            HStack(spacing: 16) {
-              // Actions menu
-              Menu {
-                Button(action: {
-                  // Save current state before opening camera
-                  previousExcerpt = excerptCapture
-                  showingCamera = true
-                }) {
-                  Label("Scan New", systemImage: "camera.viewfinder")
-                }
-
-                Button(action: {
-                  showingPhotoPicker = true
-                }) {
-                  Label("Choose from Library", systemImage: "photo.on.rectangle")
-                }
-              } label: {
-                Image(systemName: "ellipsis.circle")
-                  .font(.title2)
-                  .foregroundColor(.blue)
-              }
-
-              // Done button (only when editing)
-              if isTextEditorFocused {
-                Button("Done") {
-                  isTextEditorFocused = false
-                }
-                .foregroundColor(.blue)
-                .fontWeight(.semibold)
-              }
-            }
-          }
-        }
-      }
     }
     .fullScreenCover(isPresented: $showingCamera) {
       ImagePicker(selectedImage: $selectedImage, isPresented: $showingCamera)
@@ -122,9 +206,6 @@ struct ContentView: View {
     .background(
       PhotoPicker(selectedImage: $selectedImage, isPresented: $showingPhotoPicker)
     )
-    .sheet(isPresented: $showingVariants) {
-      VariantsView(variants: generatedVariants)
-    }
     .alert("Generation Error", isPresented: .constant(generationError != nil)) {
       Button("OK") { generationError = nil }
     } message: {
@@ -136,28 +217,53 @@ struct ContentView: View {
       Text(processingError ?? "")
     }
     .onChange(of: selectedImage) { oldValue, newValue in
-      if let image = newValue {
-        // Reset previous state before processing new image
-        editedText = ""
-        excerptCapture = nil
-        previousExcerpt = nil  // Clear saved state since we're processing new image
-        processImage(image)
-      }
+      handleImageSelection(newValue)
     }
     .onChange(of: showingCamera) { oldValue, newValue in
-      // Handle camera dismissal
-      if !newValue && selectedImage == nil {
-        // If we had a previous excerpt (from "Scan New"), restore it
-        if let previous = previousExcerpt {
-          excerptCapture = previous
-          editedText = previous.text
-          previousExcerpt = nil  // Clear after restoring
-        } else {
-          // Otherwise, reset to home (this was a fresh camera open)
-          editedText = ""
-          excerptCapture = nil
-          selectedImage = nil  // Also clear selectedImage when going to home
-        }
+      handleCameraDismissal(newValue)
+    }
+  }
+
+  // MARK: - Helper Functions
+
+  private func updateTextEditorHeight() {
+    if isTextEditorFocused {
+      // Expanded mode when focused
+      textEditorHeight = generatedVariants.isEmpty ? 300 : 250
+    } else if generatedVariants.isEmpty {
+      // Comfortable mode when no variants
+      textEditorHeight = 200
+    } else {
+      // Compact mode when variants are present and not focused
+      textEditorHeight = 120
+    }
+  }
+
+  private func handleImageSelection(_ image: UIImage?) {
+    if let image = image {
+      // Reset previous state before processing new image
+      editedText = ""
+      excerptCapture = nil
+      previousExcerpt = nil  // Clear saved state since we're processing new image
+      generatedVariants = []  // Clear variants when processing new image
+      textEditorHeight = 200  // Reset to default height
+      processImage(image)
+    }
+  }
+
+  private func handleCameraDismissal(_ isShowing: Bool) {
+    // Handle camera dismissal
+    if !isShowing && selectedImage == nil {
+      // If we had a previous excerpt (from "Scan New"), restore it
+      if let previous = previousExcerpt {
+        excerptCapture = previous
+        editedText = previous.text
+        previousExcerpt = nil  // Clear after restoring
+      } else {
+        // Otherwise, reset to home (this was a fresh camera open)
+        editedText = ""
+        excerptCapture = nil
+        selectedImage = nil  // Also clear selectedImage when going to home
       }
     }
   }
@@ -224,7 +330,10 @@ struct ContentView: View {
         await MainActor.run {
           generatedVariants = variants
           isGenerating = false
-          showingVariants = true
+          // Animate text editor to compact size after generation
+          withAnimation(.easeInOut(duration: 0.3)) {
+            updateTextEditorHeight()
+          }
         }
       } catch {
         await MainActor.run {

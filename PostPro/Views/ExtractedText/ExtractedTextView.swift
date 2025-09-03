@@ -11,6 +11,7 @@ struct ExtractedTextView: View {
   let excerpt: ExcerptCapture
   @Binding var editedText: String
   @FocusState.Binding var isTextEditorFocused: Bool
+  @Binding var dynamicHeight: CGFloat
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -20,23 +21,27 @@ struct ExtractedTextView: View {
 
       TextEditor(text: $editedText)
         .font(.body)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(
+          maxWidth: .infinity, minHeight: dynamicHeight, maxHeight: dynamicHeight,
+          alignment: .topLeading
+        )
         .background(Color(UIColor.systemGray6))
         .cornerRadius(12)
         .focused($isTextEditorFocused)
         .onAppear { editedText = excerpt.text }
     }
-    .padding(.top)
   }
 }
 
 #Preview {
   @Previewable @State var editedText = "Sample extracted text from OCR..."
   @Previewable @FocusState var isFocused: Bool
+  @Previewable @State var height: CGFloat = 200
 
   return ExtractedTextView(
     excerpt: ExcerptCapture(text: "Sample extracted text from OCR..."),
     editedText: $editedText,
-    isTextEditorFocused: $isFocused
+    isTextEditorFocused: $isFocused,
+    dynamicHeight: $height
   )
 }

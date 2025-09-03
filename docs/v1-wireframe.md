@@ -1,27 +1,29 @@
-## SnapPost v1 — UX/UI Wireframes
+## PostPro v1 — UX/UI Wireframes
 
 ### App map (v1, updated)
 
 ```mermaid
 flowchart TD
   Launch[App Launch] --> Home[Home]
-  Home -- Scan Text (Camera) --> Results[Results]
-  Home -- Choose from Library --> Results
+  Home -- Scan Text (Camera) --> Processing[Processing]
+  Home -- Choose from Library --> Processing
+  Processing --> Results[Results]
   Results -- Generate Posts --> VariantsSheet[Generated Posts (Sheet)]
   VariantsSheet -- Dismiss --> Results
-  Results -- Back --> Home
+  Results -- Home --> Home
+  Results -- Scan New --> Processing
   Home -- History (planned) --> History[HistoryView]
 ```
 
 Notes:
 
-- Implemented: `Home`, `ImageCaptureView`, `ShareSheet`.
+- Implemented: `Home`, `Processing`, `Results`, `VariantsSheet`.
 - Removed: `ComposerView` (functionality integrated inline in `Results`).
 - Planned: `HistoryView`, Quick Entry (App Intent + Lock Screen widget).
 
 ---
 
-### 1) Home (ContentView, updated)
+### 1) Home (HomeView, updated)
 
 States: initial (no text).
 
@@ -29,7 +31,8 @@ States: initial (no text).
 NAV: (inline)   [ ]
 
 Content
-  Optional short helper text
+  Hero section with app icon and description
+  Feature highlights (Instant Capture, AI Generation, Quick Share)
 
 Bottom Action Bar (pinned to safe area)
   [ camera.viewfinder  Scan Text ]   (Primary, filled, full-width)
@@ -38,55 +41,52 @@ Bottom Action Bar (pinned to safe area)
 
 Key interactions:
 
-- Scan Text → opens Camera directly (system camera); on confirm returns to Results.
-- Choose from Library → opens PHPicker; on choose returns to Results.
+- Scan Text → opens Camera directly (system camera); on confirm processes image.
+- Choose from Library → opens PHPicker; on choose processes image.
 
 ---
 
-### 2) Scanner Entry (updated)
-
-Preferred: direct to Camera on “Scan Text”.
-
-Alternative bottom sheet (if source selection needed):
+### 2) Processing (ProcessingView, updated)
 
 ```text
-Bottom Sheet (medium)
-  [ camera.fill  Take Photo ]   (Primary)
-  [ photo.fill   Choose from Library ]   (Secondary)
-  [ Cancel ]  (tertiary link)
+Processing state with smooth loading UI
+  [ Animated processing icon with scaling animation ]
+  [ "Processing Image" title ]
+  [ "Extracting text with OCR..." subtitle ]
+  [ Progress indicator ]
 ```
 
 Flow:
 
-- Take Photo → `ImagePicker` (camera)
-- Choose from Library → `PhotoPicker` (PHPicker)
-- Use Image → runs `ImageProcessor.process(image:)` → on success sets `ExcerptCapture` and dismisses
+- Automatically processes selected image with `ImageProcessor.process(image:)`
+- Shows smooth animations and progress indicators
+- Transitions to Results on success or shows error on failure
 
 ---
 
-### 3) Results (updated)
+### 3) Results (ContentView with ExtractedTextView, updated)
 
 Sub-states: Editing, Generating, Error.
 
 ```text
-NAV: Results (inline)   [Back]
+NAV: Results (inline)   [Home] [Scan New] [Done when editing]
 
 Content
-  Editable extracted text (full-height TextEditor)
+  Editable extracted text (full-height TextEditor with focus management)
 
 Bottom Action Bar (pinned)
   [ sparkles  Generate Posts ]   (Primary, filled, full-width)
-  [ doc.on.doc  Copy ]           (Secondary, outline, full-width)
-  (link) Scan New
 
-Error
-  Banner or inline alert with Retry
+Navigation Options
+  Home button (returns to start)
+  Scan New (preserves current state for comparison)
 ```
 
 Flow:
 
 - Generate → `AIClient.generateVariants(...)` (mock or real)
-- Copy → copies edited text
+- Text editing happens inline with focus management
+- Clear navigation paths always available
 
 Notes:
 
@@ -95,7 +95,7 @@ Notes:
 
 ---
 
-### 4) Generated Posts (Sheet, updated)
+### 4) Generated Posts (VariantsView Sheet, updated)
 
 ```text
 Bottom sheet (medium → large)
@@ -106,73 +106,42 @@ Bottom sheet (medium → large)
     [ Copy ]  [ Share ]
 ```
 
----
+Each variant card includes:
 
-### 5) History (planned v1)
-
-```text
-NAV: History
-
-Header
-  History (last 20)
-
-List
-  ┌──────────────────────────────────────────────────────────┐
-  │ {postedAt}                                               │
-  │ Excerpt: {excerpt...}                                    │
-  │ Variant (tone): {text...}                                │
-  │ [Copy]  [Share]  [Delete]                                │
-  └──────────────────────────────────────────────────────────┘
-
-Empty state
-  No history yet
-```
-
-Storage:
-
-- `Application Support/SparkPost/history.json` (max 20; evict oldest on insert 21).
-
----
-
-### 6) Quick Entry (planned v1.1)
-
-```text
-Lock Screen Widget → AppIntent → Deep link to Scanner
-Siri phrase: "Scan to Draft"
-```
+- Tone badge with color coding
+- Character count display
+- Copy button with haptic feedback
+- Share button using UIActivityViewController
 
 ---
 
 ### Primary flows
 
-Capture → Compose → Share
+Capture → Process → Edit → Generate → Share
 
 ```mermaid
 sequenceDiagram
   participant U as User
   participant H as Home
-  participant S as Scanner
-  participant P as ImageProcessor
-  participant C as Composer
+  participant P as Processing
+  participant R as Results
   participant A as AIClient
-  participant SS as ShareSheet
+  participant V as VariantsView
 
   U->>H: Tap Scan Text
-  H->>S: Present sheet
-  U->>S: Take Photo / Choose from Library
-  U->>S: Tap Use Image
-  S->>P: process(image)
-  P-->>S: ExcerptCapture
-  S-->>H: Dismiss with result
-  U->>H: Tap Compose Posts
-  H->>C: Present sheet
-  U->>C: Tap Generate LinkedIn Posts
-  C->>A: generateVariants(...)
-  A-->>C: [Variant] (5)
-  U->>C: Tap Share
-  C->>SS: Present share sheet
-  SS-->>C: Completed
-  C-->>H: Dismiss (optional)
+  H->>P: Present processing
+  U->>P: Image processing
+  P-->>R: ExcerptCapture result
+  U->>R: Edit text (optional)
+  U->>R: Tap Generate Posts
+  R->>A: generateVariants(...)
+  A-->>R: [Variant] (5)
+  R->>V: Present variants sheet
+  U->>V: Tap Share
+  V->>U: Present share sheet
+  U->>V: Dismiss sheet
+  V-->>R: Return to results
+  R->>H: Return to home (optional)
 ```
 
 ---
@@ -183,14 +152,43 @@ sequenceDiagram
 - Typography: system fonts (LargeTitle, Title2, Headline, Subheadline, Body, Caption)
 - Shapes: 12–16pt corner radius on cards and buttons; subtle shadow on cards
 - Icons: SF Symbols as referenced in screens
+- Animations: smooth transitions with .easeInOut timing
+- Focus Management: proper keyboard handling and focus states
 
 ---
 
 ### Screen inventory and statuses
 
-- Home (`ContentView`) — Implemented
-- Scanner (`ImageCaptureView`, `ImagePicker`, `PhotoPicker`) — Implemented
-- Composer (`ComposerView`, `ComposeVM`) — Implemented
-- Share Sheet (`ShareSheet`) — Implemented
-- History (`HistoryView`, `HistoryStore`) — Planned
-- Quick Entry (AppIntent + Widget) — Planned
+- Home (`HomeView`) — ✅ Implemented
+- Processing (`ProcessingView`) — ✅ Implemented
+- Results (`ContentView` with `ExtractedTextView`) — ✅ Implemented
+- Generated Posts (`VariantsView` sheet) — ✅ Implemented
+- History (`HistoryView`, `HistoryStore`) — 🚧 Planned
+- Quick Entry (AppIntent + Widget) — 🚧 Planned
+
+---
+
+### Key UX Improvements Implemented
+
+1. **Advanced Navigation**
+
+   - Clear Home button always available
+   - "Scan New" preserves previous state for comparison
+   - Proper iOS navigation patterns with back buttons
+
+2. **State Management**
+
+   - Smooth transitions between processing states
+   - Text editing with focus management
+   - State preservation for better user experience
+
+3. **UI Polish**
+
+   - Smooth animations and transitions
+   - Proper spacing and iOS-standard design
+   - Haptic feedback for better interaction
+
+4. **Development Tools**
+   - Mock mode for testing without API calls
+   - Comprehensive error handling
+   - Realistic mock responses for development
